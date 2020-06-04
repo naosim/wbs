@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<style>
+html {
+  margin: 12px;
+}
+th, td {
+  font-size: 12px;
+}
+.table {
+  width: 2600px;
+  border-collapse: collapse;
+  border: 1px solid #aaa;
+}
+th {
+  background: #eef;
+  border: 1px solid #aaa;
+}
+td {
+  border: 1px solid #aaa;
+  padding-left: 4px;
+  vertical-align: top;
+}
+thead th {
+  /* 縦スクロール時に固定する */
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  /* tbody内のセルより手前に表示する */
+  z-index: 1;
+}
+
+th:first-child, td:first-child {
+  /* 横スクロール時に固定する */
+  position: -webkit-sticky;
+  position: sticky;
+  left: 0;
+  width: 300px;
+  background-color: #eef;
+  z-index: 2;
+}
+
+.date {
+  width: 24px;
+}
+
+.nest1, .nest2 {
+  display: inline-block;
+}
+.nest1 {
+  width: 12px;
+}
+.nest2 {
+  width: 24px;
+}
+.nest3 {
+  width: 36px;
+}
+.nest4 {
+  width: 48px;
+}
+.nest5 {
+  width: 60px;
+}
+.nest6 {
+  width: 72px;
+}
+.nest7 {
+  width: 84px;
+}
+.nest8 {
+  width: 96px;
+}
+.disk {
+  width: 24px;
+  display: inline-block;
+  text-align: center;
+}
+.whitespace {
+  display: inline-block;
+}
+.hilight {
+  background: #ffa;
+}
+.notTask {
+  color: #840;
+}
+</style>
+<div id="app">
+  <h1>WBS</h1>
+  フィルタ: <input type="text" v-model="filter"></input>
+  <table class="table">
+    <thead>
+      <th>件名</th>
+      <th style="width: 100px">担当</th>
+      <th style="width: 300px">最新状況</th>
+      <th style="width: 100px">期間</th>
+
+      <th class="date">4</th><th class="date">5</th><th class="date">6</th><th class="date">7</th><th class="date">8</th><th class="date">9</th><th class="date">10</th><th class="date">11</th><th class="date">12</th><th class="date">1</th><th class="date">2</th><th class="date">3</th>
+
+      <th style="width: 200px">DONEの定義</th>
+      <th>関係者</th>
+      <th>完了</th>
+      
+      
+      <th>内容</th>
+      <th>リンク</th>
+      
+    </thead>
+    <tr v-for="value in expandList" v-bind:class="value.isHilight ? 'hilight' : ''">
+      <template v-if="!value.isTask">
+        <td class="notTask">
+          <div v-bind:class="['whitespace', value.nest]"></div>
+          <button class="disk" v-if="value.status=='closed'" v-on:click="value.status = 'opened'">+</button>
+          <button class="disk" v-if="value.status=='opened'" v-on:click="value.status = 'closed'">-</button>
+          {{ value.title }}
+        </td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </template>
+
+      <template v-if="value.isTask">
+        <td v-bind:class="value.isTask ? 'task' : 'notTask'">
+          <div v-bind:class="['whitespace', value.nest]"></div>
+          <span class="disk">*</span>
+          <a v-if="value.issueNumber>0" v-bind:href="issueUrlPrefix + '/' + value.summary.issueNumber" target="_blank">{{ value.title }}</a>
+          <span v-if="0>value.issueNumber">{{ value.title }}</span> <button v-if="0>value.issueNumber" v-on:click="createTask(value)">> task</button>
+        </td>
+        <template v-if="value.issueNumber>0">
+          <td><span>{{ value.summary['担当'] }}</span></td>
+          <td>
+            <template v-if="value.latestNote">
+              {{value.latestNote.date}}<br>
+              <textarea v-bind:id="'comment' + value.latestNote.id" style="width: 95%; height: 64px">{{value.latestNote.body}}</textarea><br>
+              <button v-on:click="editComment(value.issueNumber, value.latestNote.id, value.latestNote.date, '#comment' + value.latestNote.id)">更新</button>
+            </template>
+            <button v-on:click="createNote(value.issueNumber)">新規</button>
+            
+        
+          </td>
+          <td><span>{{ value.summary['開始日'] }}<br>〜{{value.summary['終了日'] }}</span></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td><span>{{ value.summary['DONEの定義'] }}</span></td>
+          <td><span>{{ value.summary['関係者'] }}</span></td>
+          <td><span>{{ value.summary['完了'] }}</span></td>
+          <td><span v-html="br(value.summary['内容'])"></span></td>
+          <td><span><p v-for="link in value.summary['リンク']"><a v-bind:href="link.path">{{link.title}}</a></p></span></td>
+        </template>
+        <template v-else>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </template>
+      </template>
+      
+      
+    </tr>
+  </table>
+  <textarea v-model="rootBody"></textarea><br>
+  <button v-on:click="onPressedRootBodyEdit()">ok</button><br>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sugar/2.0.6/sugar.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sugar/2.0.6/locales/ja.min.js"></script>
+<!-- <script src="https://unpkg.com/github-api/dist/GitHub.bundle.min.js"></script> -->
+<script src="http://naosim.sakura.ne.jp/lib/github.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script src="config.js"></script>
+
+<script src="./js/index/index.js"></script>
+<script>
+
+
+</script>

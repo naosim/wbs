@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist",                        /* 出力構造をディレクトリにリダイレクトします。 */
+    "rootDir": "./src",
+    "lib": ["es2017", "dom"],
+  }
+}
