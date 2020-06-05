@@ -1,4 +1,4 @@
-import {CommentRepository} from './CommentRepository'
+import {CommentRepository} from '../../domain/github/CommentRepository'
 declare var GitHub: any;
 // var gh = new GitHub({token: config.githubToken});
 // const issue = gh.getIssues(config.owner, config.repo)

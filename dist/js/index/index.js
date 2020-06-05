@@ -229,6 +229,8 @@ function () {
   };
 
   IssueRepositoryDummy.prototype.getIssue = function (issueNumber) {
+    console.log(issueNumber);
+
     if (!this.map[issueNumber]) {
       if (issueNumber == this.taskRootIssueNumber) {
         this.map[issueNumber] = {
@@ -237,6 +239,10 @@ function () {
       } else if (issueNumber == 5) {
         this.map[issueNumber] = {
           body: body_5_done
+        };
+      } else if (issueNumber == 27) {
+        this.map[issueNumber] = {
+          body: body27
         };
       } else {
         this.map[issueNumber] = {
@@ -277,8 +283,9 @@ function () {
 }();
 
 exports.IssueRepositoryDummy = IssueRepositoryDummy;
-var text = "\n- \u5B66\u696D\n  - \u5BBF\u984C\n    - [5\u6708\u5206](/26)\n    - 6\u6708\u5206\n- \u904A\u3073\n  - [\u65C5\u884C](/5)\n".trim();
+var text = "\n- \u5B66\u696D\n  - \u5BBF\u984C\n    - [5\u6708\u5206](/26)\n    - 6\u6708\u5206\n- \u904A\u3073\n  - [\u65E5\u672C\u65C5\u884C](/5)\n  - [\u4E16\u754C\u4E00\u5468](/27)\n".trim();
 var body26 = "\n### \u62C5\u5F53: \u3059\u305A\u304D\n### \u95A2\u4FC2\u8005: \u3055\u3068\u3046\n### DONE\u306E\u5B9A\u7FA9: \u7D42\u308F\u3089\u3059\n### \u30DE\u30A4\u30EB\u30B9\u30C8\u30FC\u30F3: \n### \u958B\u59CB\u65E5: 2020/05/11\n### \u7D42\u4E86\u65E5: 2020/05/29\n### \u5185\u5BB9\n5/28\u306B\u3084\u308B\n\u9811\u5F35\u308B\n### \u30EA\u30F3\u30AF:\n- [yahoo](http://www.yahoo.co.jp)\n".trim();
+var body27 = "\n### \u62C5\u5F53: \u3059\u305A\u304D\n### \u95A2\u4FC2\u8005: \u3055\u3068\u3046\n### DONE\u306E\u5B9A\u7FA9: \u3044\u3064\u304B\n### \u30DE\u30A4\u30EB\u30B9\u30C8\u30FC\u30F3: \n### \u958B\u59CB\u65E5: 2021/05/11\n### \u7D42\u4E86\u65E5: 2021/05/29\n### \u5185\u5BB9\n\u4E16\u754C\u4E00\u5468\u3059\u308B\n\u9811\u5F35\u308B\n### \u30EA\u30F3\u30AF:\n".trim();
 var body_5_done = "\n### \u62C5\u5F53: \u305F\u306A\u304B\n### \u95A2\u4FC2\u8005:\n### DONE\u306E\u5B9A\u7FA9: \u884C\u304F\n### \u30DE\u30A4\u30EB\u30B9\u30C8\u30FC\u30F3: \n### \u958B\u59CB\u65E5: 2020/05/11\n### \u7D42\u4E86\u65E5: 2020/05/29\n### \u5185\u5BB9\n\u5168\u56FD\u4E00\u5468\n### \u30EA\u30F3\u30AF:\n### \u5B8C\u4E86: 2020/05/29\n".trim();
 },{}],"infra/github/CommentRepositoryImpl.ts":[function(require,module,exports) {
 "use strict";
@@ -503,7 +510,7 @@ function () {
    */
 
 
-  TaskSummaryRepository.convert = function (issue) {
+  TaskSummaryRepository.convert = function (issue, now) {
     // bodyをパース
     var obj = issue.body.split('### ').slice(1).map(function (v) {
       var first = v.split('\n')[0];
@@ -542,20 +549,21 @@ function () {
         isHttp: path.indexOf('http') == 0
       };
     });
-    obj.isDone = obj['完了'] && obj['完了'].trim().length > 0; // issue番号
+    obj.isDone = obj['完了'] && obj['完了'].trim().length > 0;
+    obj.isBeforeStartDate = obj['開始日'] && new Date(obj['開始日']) && new Date(obj['開始日']).getTime() > now.getTime(); // issue番号
 
     obj.issueNumber = issue.number;
     return obj;
   };
 
-  TaskSummaryRepository.prototype.getSummary = function (num) {
+  TaskSummaryRepository.prototype.getSummary = function (num, now) {
     if (num <= 0) {
       throw '不正な番号';
     } // 担当,関係者,完了,DONEの定義,マイルストーン,開始日,終了日,内容,リンク
 
 
     var issue = this.issueRepository.getIssue(num);
-    var s = TaskSummaryRepository.convert(issue);
+    var s = TaskSummaryRepository.convert(issue, now);
     return s;
   };
 
@@ -663,7 +671,7 @@ function () {
       }
 
       console.log(obj);
-      setup(config.taskRootIssueNumber, rootIssue.body, taskSummaryRepository, taskNoteRepository, issueRepository);
+      setup(config.taskRootIssueNumber, rootIssue.body, taskSummaryRepository, taskNoteRepository, issueRepository, new Date());
     });
   });
 })();
@@ -690,7 +698,7 @@ function findParent(obj, nest) {
   return findParent(obj.children[obj.children.length - 1], nest - 1);
 }
 
-function parse(text, taskSummaryRepository, taskNoteRepository) {
+function parse(text, taskSummaryRepository, taskNoteRepository, now) {
   var rootObj = {
     title: '_root',
     children: [],
@@ -722,17 +730,23 @@ function parse(text, taskSummaryRepository, taskNoteRepository) {
       status: 'opened',
       issueNumber: issueNumber,
       isTask: true,
+      isIssuedTask: false,
       summary: null,
       notes: null,
       latestNote: null,
-      latestNoteText: ''
+      latestNoteText: '',
+      isDone: false,
+      isBeforeStartDate: false
     };
 
     if (obj.issueNumber > 0) {
-      obj.summary = taskSummaryRepository.getSummary(obj.issueNumber);
+      obj.isIssuedTask = true;
+      obj.summary = taskSummaryRepository.getSummary(obj.issueNumber, now);
       obj.notes = taskNoteRepository.getNotes(obj.issueNumber);
       obj.latestNote = obj.notes[0];
       obj.latestNoteText = obj.notes.length > 0 ? (obj.notes[0].date + "\n" + obj.notes[0].body).split('\n').join('<br>') : '';
+      obj.isDone = obj.summary.isDone;
+      obj.isBeforeStartDate = obj.summary.isBeforeStartDate;
     } // console.log(nest, line);
 
 
@@ -756,13 +770,13 @@ function parse(text, taskSummaryRepository, taskNoteRepository) {
   return rootObj.children;
 }
 
-function setup(taskRootIssueNumber, rootBody, taskSummaryRepository, taskNoteRepository, issueRepository) {
+function setup(taskRootIssueNumber, rootBody, taskSummaryRepository, taskNoteRepository, issueRepository, now) {
   console.log('rootBody', rootBody);
   var app = new Vue({
     el: '#app',
     data: {
       message: 'Hello Vue!',
-      list: parse(rootBody, taskSummaryRepository, taskNoteRepository),
+      list: parse(rootBody, taskSummaryRepository, taskNoteRepository, now),
       rootBody: rootBody,
       filter: '',
       owner: config.owner,
@@ -794,7 +808,7 @@ function setup(taskRootIssueNumber, rootBody, taskSummaryRepository, taskNoteRep
     },
     methods: {
       reload: function reload() {
-        this.list = parse(this.rootBody, taskSummaryRepository, taskNoteRepository);
+        this.list = parse(this.rootBody, taskSummaryRepository, taskNoteRepository, now);
       },
       onPressedRootBodyEdit: function onPressedRootBodyEdit() {
         var _this = this;

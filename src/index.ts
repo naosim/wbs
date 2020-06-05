@@ -14,6 +14,11 @@ declare var config: {
   isDevelop:boolean
 }
 
+type Summary = {
+  issueNumber: number,
+  isDone: boolean,
+  isBeforeStartDate: boolean
+}
 
 class TaskSummaryRepository {
   constructor(private issueRepository: IssueRepository) {
@@ -24,7 +29,7 @@ class TaskSummaryRepository {
    * issueをsummaryに変換
    * @param issue 
    */
-  static convert(issue) {
+  static convert(issue, now: Date): Summary {
     // bodyをパース
     var obj = issue.body.split('### ').slice(1).map(v => {
       var first = v.split('\n')[0];
@@ -53,18 +58,20 @@ class TaskSummaryRepository {
 
     obj.isDone = obj['完了'] && obj['完了'].trim().length > 0;
 
+    obj.isBeforeStartDate = obj['開始日'] && new Date(obj['開始日']) && new Date(obj['開始日']).getTime() > now.getTime()
+
     // issue番号
     obj.issueNumber = issue.number
     return obj;
   }
 
-  getSummary(num: number) {
+  getSummary(num: number, now: Date): Summary {
     if(num <= 0) {
       throw '不正な番号'
     }
     // 担当,関係者,完了,DONEの定義,マイルストーン,開始日,終了日,内容,リンク
     var issue = this.issueRepository.getIssue(num);
-    var s = TaskSummaryRepository.convert(issue);
+    var s = TaskSummaryRepository.convert(issue, now);
     return s;
   }
 
@@ -183,7 +190,7 @@ ${date}
         throw err;
       }
       console.log(obj);
-      setup(config.taskRootIssueNumber, rootIssue.body, taskSummaryRepository, taskNoteRepository, issueRepository);
+      setup(config.taskRootIssueNumber, rootIssue.body, taskSummaryRepository, taskNoteRepository, issueRepository, new Date());
     });
   })
 })()
@@ -206,7 +213,23 @@ function findParent(obj, nest) {
   return findParent(obj.children[obj.children.length - 1], nest - 1)
 }
 
-function parse(text, taskSummaryRepository: TaskSummaryRepository, taskNoteRepository: TaskNoteRepository) {
+type TaskViewModel = {
+  title: string, 
+  nest: string, 
+  children: TaskViewModel[], 
+  status: string, 
+  issueNumber: number, 
+  isTask: boolean, 
+  isIssuedTask: boolean,
+  summary: Summary, 
+  notes: {date: string, body: string}[], 
+  latestNote: any, 
+  latestNoteText: string,
+  isDone: boolean,
+  isBeforeStartDate: boolean
+
+}
+function parse(text, taskSummaryRepository: TaskSummaryRepository, taskNoteRepository: TaskNoteRepository, now: Date) {
   var rootObj = {title: '_root', children: [], status: 'opened', isTask: false, summary:null, notes: null, latestNote: null, latestNoteText: ''};
   var lastObj = rootObj;
   var parentObj = rootObj;
@@ -220,12 +243,15 @@ function parse(text, taskSummaryRepository: TaskSummaryRepository, taskNoteRepos
       issueNumber = parseInt(ary[ary.length - 1].split(')')[0]);
       title = title.split(']')[0].slice(1);
     }
-    var obj = {title: title, nest: `nest${nest}`, children: [], status: 'opened', issueNumber: issueNumber, isTask: true, summary:null, notes: null, latestNote: null, latestNoteText: ''};
+    var obj: TaskViewModel = {title: title, nest: `nest${nest}`, children: [], status: 'opened', issueNumber: issueNumber, isTask: true, isIssuedTask: false, summary:null, notes: null, latestNote: null, latestNoteText: '', isDone: false, isBeforeStartDate: false};
     if(obj.issueNumber > 0) {
-      obj.summary = taskSummaryRepository.getSummary(obj.issueNumber);
+      obj.isIssuedTask = true;
+      obj.summary = taskSummaryRepository.getSummary(obj.issueNumber, now);
       obj.notes = taskNoteRepository.getNotes(obj.issueNumber)
       obj.latestNote = obj.notes[0];
       obj.latestNoteText = obj.notes.length > 0 ? `${obj.notes[0].date}\n${obj.notes[0].body}`.split('\n').join('<br>') : '';
+      obj.isDone = obj.summary.isDone
+      obj.isBeforeStartDate = obj.summary.isBeforeStartDate
     }
     // console.log(nest, line);
     if(lastNest == nest) {
@@ -251,14 +277,15 @@ function setup(
   rootBody, 
   taskSummaryRepository: TaskSummaryRepository, 
   taskNoteRepository: TaskNoteRepository,
-  issueRepository: IssueRepository
+  issueRepository: IssueRepository,
+  now: Date
   ) {
   console.log('rootBody', rootBody)
   var app = new Vue({
     el: '#app',
     data: {
       message: 'Hello Vue!',
-      list: parse(rootBody, taskSummaryRepository, taskNoteRepository),
+      list: parse(rootBody, taskSummaryRepository, taskNoteRepository, now),
       rootBody: rootBody,
       filter: '',
       owner: config.owner,
@@ -280,6 +307,7 @@ function setup(
           }else {
             v.isHilight = false;
           }
+
           return v;
         })
         return result;
@@ -287,7 +315,7 @@ function setup(
     },
     methods: {
       reload: function(){
-        this.list = parse(this.rootBody, taskSummaryRepository, taskNoteRepository);
+        this.list = parse(this.rootBody, taskSummaryRepository, taskNoteRepository, now);
       },
       onPressedRootBodyEdit: function() {
         issueRepository.updateBody(taskRootIssueNumber, this.rootBody, (err, obj)=> this.reload())
