@@ -115,7 +115,7 @@ th:first-child, td:first-child {
       
     </thead>
     <tr v-for="value in expandList" v-bind:class="[value.isIssuedTask && value.isDone ? 'done' : '', value.isHilight ? 'hilight' : '']">
-      <template v-if="!value.isTask">
+      <template v-if="value.isNode">
         <td class="notTask">
           <div v-bind:class="['whitespace', value.nest]"></div>
           <button class="disk" v-if="value.status=='closed'" v-on:click="value.status = 'opened'">+</button>
@@ -145,14 +145,14 @@ th:first-child, td:first-child {
         <td></td>
       </template>
 
-      <template v-if="value.isTask">
-        <td v-bind:class="value.isTask ? 'task' : 'notTask'">
+      <template v-if="!value.isNode">
+        <td class="task">
           <div v-bind:class="['whitespace', value.nest]"></div>
           <span class="disk">*</span>
-          <a v-if="value.issueNumber>0" v-bind:href="issueUrlPrefix + '/' + value.summary.issueNumber" target="_blank">{{ value.title }}</a>
-          <span v-if="0>value.issueNumber">{{ value.title }}</span> <button v-if="0>value.issueNumber" v-on:click="createTask(value)">> task</button>
+          <a v-if="value.isManaged" v-bind:href="issueUrlPrefix + '/' + value.taskId" target="_blank">{{ value.title }}</a>
+          <span v-if="value.isTitleOnly">{{ value.title }}</span> <button v-if="value.isTitleOnly" v-on:click="createTask(value)">> task</button>
         </td>
-        <template v-if="value.issueNumber>0">
+        <template v-if="value.isManaged">
           <td><span>{{ value.summary['担当'] }}</span></td>
           <td>
             <template v-if="value.latestNote">

@@ -117,7 +117,82 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   }
 
   return newRequire;
-})({"infra/github/IssueRepositoryImpl.ts":[function(require,module,exports) {
+})({"domain/task.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.ManagedTask = exports.TitleOnlyTask = exports.NodeTask = void 0;
+
+var NodeTask =
+/** @class */
+function () {
+  function NodeTask(title, children, nest) {
+    this.title = title;
+    this.children = children;
+    this.nest = nest;
+    this.isManaged = false;
+    this.status = 'opened';
+
+    if (children.length > 0) {
+      this.isNode = true;
+      this.isTitleOnly = false;
+    } else {
+      this.isNode = false;
+      this.isTitleOnly = true;
+    }
+  }
+
+  NodeTask.prototype.addChildren = function (children) {
+    this.children.push(children);
+    this.isNode = true;
+    this.isTitleOnly = false;
+  };
+
+  return NodeTask;
+}();
+
+exports.NodeTask = NodeTask;
+
+var TitleOnlyTask =
+/** @class */
+function () {
+  function TitleOnlyTask(title, nest) {
+    this.title = title;
+    this.nest = nest;
+    this.isNode = false;
+    this.isTitleOnly = true;
+    this.isManaged = false;
+  }
+
+  return TitleOnlyTask;
+}();
+
+exports.TitleOnlyTask = TitleOnlyTask;
+
+var ManagedTask =
+/** @class */
+function () {
+  function ManagedTask(taskId, title, summary, nest, latestNote) {
+    this.taskId = taskId;
+    this.title = title;
+    this.summary = summary;
+    this.nest = nest;
+    this.latestNote = latestNote;
+    this.isNode = false;
+    this.isTitleOnly = false;
+    this.isManaged = true;
+    this.isDone = summary.isDone;
+    this.isBeforeStartDate = summary.isBeforeStartDate;
+    this.latestNoteText = latestNote ? latestNote.date + "\n" + latestNote.body : '';
+  }
+
+  return ManagedTask;
+}();
+
+exports.ManagedTask = ManagedTask;
+},{}],"infra/github/IssueRepositoryImpl.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -715,7 +790,9 @@ exports.TaskSummaryRepositoryImpl = TaskSummaryRepositoryImpl;
 
 Object.defineProperty(exports, "__esModule", {
   value: true
-});
+}); /// <reference path="./sugar.d.ts" />
+
+var task_1 = require("./domain/task");
 
 var IssueRepositoryImpl_1 = require("./infra/github/IssueRepositoryImpl");
 
@@ -837,22 +914,58 @@ function findParent(obj, nest) {
     return obj;
   }
 
-  return findParent(obj.children[obj.children.length - 1], nest - 1);
-}
+  var lastTask = obj.children[obj.children.length - 1];
+  if (!lastTask.isNode) throw 'データ不正';
+  return findParent(lastTask, nest - 1);
+} // function parse(text, taskSummaryRepository: TaskSummaryRepository, taskNoteRepository: TaskNoteRepository, now: Date) {
+//   var rootObj = {title: '_root', children: [], status: 'opened', isTask: false, summary:null, notes: null, latestNote: null, latestNoteText: ''};
+//   var lastObj = rootObj;
+//   var parentObj = rootObj;
+//   var lastNest = 0;
+//   text.trim().split('\n').forEach(line => {
+//     var nest = line.split('-')[0].length / 2
+//     var title = line.slice(nest * 2 + 2).trim();
+//     var issueNumber = -1;
+//     if(title.indexOf('[') == 0) {
+//       let ary = title.split('/');
+//       issueNumber = parseInt(ary[ary.length - 1].split(')')[0]);
+//       title = title.split(']')[0].slice(1);
+//     }
+//     var obj: TaskViewModel = {title: title, nest: `nest${nest}`, children: [], status: 'opened', issueNumber: issueNumber, isTask: true, isIssuedTask: false, summary:null, notes: null, latestNote: null, latestNoteText: '', isDone: false, isBeforeStartDate: false};
+//     if(obj.issueNumber > 0) {
+//       obj.isIssuedTask = true;
+//       obj.summary = taskSummaryRepository.getSummary(obj.issueNumber, now);
+//       obj.notes = taskNoteRepository.getNotes(obj.issueNumber)
+//       obj.latestNote = obj.notes[0];
+//       obj.latestNoteText = obj.notes.length > 0 ? `${obj.notes[0].date}\n${obj.notes[0].body}`.split('\n').join('<br>') : '';
+//       obj.isDone = obj.summary.isDone
+//       obj.isBeforeStartDate = obj.summary.isBeforeStartDate
+//     }
+//     // console.log(nest, line);
+//     if(lastNest == nest) {
+//     }
+//     if(lastNest < nest) {
+//       parentObj = lastObj;
+//     }
+//     if(lastNest > nest) {
+//       parentObj = findParent(root, nest)
+//     }
+//     // console.log(parentObj);
+//     parentObj.isTask = false;
+//     parentObj.children.push(obj)
+//     lastObj = obj;
+//     lastNest = nest;
+//   });
+//   // console.log(rootObj.children);
+//   return rootObj.children;
+// }
 
-function parse(text, taskSummaryRepository, taskNoteRepository, now) {
-  var rootObj = {
-    title: '_root',
-    children: [],
-    status: 'opened',
-    isTask: false,
-    summary: null,
-    notes: null,
-    latestNote: null,
-    latestNoteText: ''
-  };
-  var lastObj = rootObj;
-  var parentObj = rootObj;
+
+function parse2(text, taskSummaryRepository, taskNoteRepository, now) {
+  var rootNodeTask = new task_1.NodeTask('_root', [], ''); //{title: '_root', children: [], status: 'opened', isTask: false, summary:null, notes: null, latestNote: null, latestNoteText: ''};
+
+  var lastTask = rootNodeTask;
+  var parentTask = rootNodeTask;
   var lastNest = 0;
   text.trim().split('\n').forEach(function (line) {
     var nest = line.split('-')[0].length / 2;
@@ -880,45 +993,45 @@ function parse(text, taskSummaryRepository, taskNoteRepository, now) {
       isDone: false,
       isBeforeStartDate: false
     };
+    var task;
 
     if (obj.issueNumber > 0) {
-      obj.isIssuedTask = true;
-      obj.summary = taskSummaryRepository.getSummary(obj.issueNumber, now);
-      obj.notes = taskNoteRepository.getNotes(obj.issueNumber);
-      obj.latestNote = obj.notes[0];
-      obj.latestNoteText = obj.notes.length > 0 ? (obj.notes[0].date + "\n" + obj.notes[0].body).split('\n').join('<br>') : '';
-      obj.isDone = obj.summary.isDone;
-      obj.isBeforeStartDate = obj.summary.isBeforeStartDate;
+      // managedTask
+      task = new task_1.ManagedTask(obj.issueNumber, obj.title, taskSummaryRepository.getSummary(obj.issueNumber, now), obj.nest, taskNoteRepository.getNotes(obj.issueNumber)[0]);
+    } else {
+      task = new task_1.NodeTask(obj.title, [], obj.nest);
     } // console.log(nest, line);
 
 
     if (lastNest == nest) {}
 
     if (lastNest < nest) {
-      parentObj = lastObj;
+      if (lastTask.isManaged) throw 'データ不正';
+      parentTask = lastTask;
     }
 
     if (lastNest > nest) {
-      parentObj = findParent(rootObj, nest);
+      parentTask = findParent(rootNodeTask, nest);
     } // console.log(parentObj);
 
 
-    parentObj.isTask = false;
-    parentObj.children.push(obj);
-    lastObj = obj;
+    parentTask.addChildren(task);
+    lastTask = task;
     lastNest = nest;
   }); // console.log(rootObj.children);
 
-  return rootObj.children;
+  return rootNodeTask.children;
 }
 
 function setup(taskRootIssueNumber, rootBody, taskSummaryRepository, taskNoteRepository, issueRepository, now) {
   console.log('rootBody', rootBody);
+  var tasks = parse2(rootBody, taskSummaryRepository, taskNoteRepository, now);
+  console.log(tasks);
   var app = new Vue({
     el: '#app',
     data: {
       message: 'Hello Vue!',
-      list: parse(rootBody, taskSummaryRepository, taskNoteRepository, now),
+      list: tasks,
       rootBody: rootBody,
       filter: '',
       owner: config.owner,
@@ -950,7 +1063,7 @@ function setup(taskRootIssueNumber, rootBody, taskSummaryRepository, taskNoteRep
     },
     methods: {
       reload: function reload() {
-        this.list = parse(this.rootBody, taskSummaryRepository, taskNoteRepository, now);
+        this.list = parse2(this.rootBody, taskSummaryRepository, taskNoteRepository, now);
       },
       onPressedRootBodyEdit: function onPressedRootBodyEdit() {
         var _this = this;
@@ -1017,7 +1130,7 @@ function zerofil(num) {
 }
 
 console.log(new Sugar.Date('2 weeks ago').getMonth());
-},{"./infra/github/IssueRepositoryImpl":"infra/github/IssueRepositoryImpl.ts","./infra/github/IssueRepositoryDummy":"infra/github/IssueRepositoryDummy.ts","./infra/github/CommentRepositoryImpl":"infra/github/CommentRepositoryImpl.ts","./infra/github/CommentRepositoryDummy":"infra/github/CommentRepositoryDummy.ts","./infra/tasksummary/TaskSummaryImpl":"infra/tasksummary/TaskSummaryImpl.ts"}],"../../../../../../usr/local/lib/node_modules/parcel/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./domain/task":"domain/task.ts","./infra/github/IssueRepositoryImpl":"infra/github/IssueRepositoryImpl.ts","./infra/github/IssueRepositoryDummy":"infra/github/IssueRepositoryDummy.ts","./infra/github/CommentRepositoryImpl":"infra/github/CommentRepositoryImpl.ts","./infra/github/CommentRepositoryDummy":"infra/github/CommentRepositoryDummy.ts","./infra/tasksummary/TaskSummaryImpl":"infra/tasksummary/TaskSummaryImpl.ts"}],"../../../../../../usr/local/lib/node_modules/parcel/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;

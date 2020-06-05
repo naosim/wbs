@@ -1,4 +1,5 @@
 /// <reference path="./sugar.d.ts" />
+import {NodeTask, TitleOnlyTask, ManagedTask, Task} from './domain/task'
 import {IssueRepository} from './domain/github/IssueRepository'
 import {IssueRepositoryImpl} from './infra/github/IssueRepositoryImpl'
 import {IssueRepositoryDummy} from './infra/github/IssueRepositoryDummy'
@@ -126,11 +127,14 @@ function getExpandList(list) {
   return result;
 }
 
-function findParent(obj, nest) {
+function findParent(obj: NodeTask, nest) {
   if(nest == 0) {
     return obj;
   }
-  return findParent(obj.children[obj.children.length - 1], nest - 1)
+  
+  var lastTask = obj.children[obj.children.length - 1];
+  if(!lastTask.isNode) throw 'データ不正'
+  return findParent(lastTask as NodeTask, nest - 1)
 }
 
 type TaskViewModel = {
@@ -149,10 +153,53 @@ type TaskViewModel = {
   isBeforeStartDate: boolean
 
 }
-function parse(text, taskSummaryRepository: TaskSummaryRepository, taskNoteRepository: TaskNoteRepository, now: Date) {
-  var rootObj = {title: '_root', children: [], status: 'opened', isTask: false, summary:null, notes: null, latestNote: null, latestNoteText: ''};
-  var lastObj = rootObj;
-  var parentObj = rootObj;
+// function parse(text, taskSummaryRepository: TaskSummaryRepository, taskNoteRepository: TaskNoteRepository, now: Date) {
+//   var rootObj = {title: '_root', children: [], status: 'opened', isTask: false, summary:null, notes: null, latestNote: null, latestNoteText: ''};
+//   var lastObj = rootObj;
+//   var parentObj = rootObj;
+//   var lastNest = 0;
+//   text.trim().split('\n').forEach(line => {
+//     var nest = line.split('-')[0].length / 2
+//     var title = line.slice(nest * 2 + 2).trim();
+//     var issueNumber = -1;
+//     if(title.indexOf('[') == 0) {
+//       let ary = title.split('/');
+//       issueNumber = parseInt(ary[ary.length - 1].split(')')[0]);
+//       title = title.split(']')[0].slice(1);
+//     }
+//     var obj: TaskViewModel = {title: title, nest: `nest${nest}`, children: [], status: 'opened', issueNumber: issueNumber, isTask: true, isIssuedTask: false, summary:null, notes: null, latestNote: null, latestNoteText: '', isDone: false, isBeforeStartDate: false};
+//     if(obj.issueNumber > 0) {
+//       obj.isIssuedTask = true;
+//       obj.summary = taskSummaryRepository.getSummary(obj.issueNumber, now);
+//       obj.notes = taskNoteRepository.getNotes(obj.issueNumber)
+//       obj.latestNote = obj.notes[0];
+//       obj.latestNoteText = obj.notes.length > 0 ? `${obj.notes[0].date}\n${obj.notes[0].body}`.split('\n').join('<br>') : '';
+//       obj.isDone = obj.summary.isDone
+//       obj.isBeforeStartDate = obj.summary.isBeforeStartDate
+//     }
+//     // console.log(nest, line);
+//     if(lastNest == nest) {
+//     }
+//     if(lastNest < nest) {
+//       parentObj = lastObj;
+//     }
+//     if(lastNest > nest) {
+//       parentObj = findParent(root, nest)
+//     }
+//     // console.log(parentObj);
+//     parentObj.isTask = false;
+//     parentObj.children.push(obj)
+//     lastObj = obj;
+//     lastNest = nest;
+//   });
+//   // console.log(rootObj.children);
+//   return rootObj.children;
+// }
+
+function parse2(text, taskSummaryRepository: TaskSummaryRepository, taskNoteRepository: TaskNoteRepository, now: Date): Array<NodeTask | TitleOnlyTask | ManagedTask> {
+  var rootNodeTask = new NodeTask('_root', [], '');//{title: '_root', children: [], status: 'opened', isTask: false, summary:null, notes: null, latestNote: null, latestNoteText: ''};
+  var lastTask: Task = rootNodeTask;
+  var parentTask = rootNodeTask;
   var lastNest = 0;
   text.trim().split('\n').forEach(line => {
     var nest = line.split('-')[0].length / 2
@@ -164,32 +211,35 @@ function parse(text, taskSummaryRepository: TaskSummaryRepository, taskNoteRepos
       title = title.split(']')[0].slice(1);
     }
     var obj: TaskViewModel = {title: title, nest: `nest${nest}`, children: [], status: 'opened', issueNumber: issueNumber, isTask: true, isIssuedTask: false, summary:null, notes: null, latestNote: null, latestNoteText: '', isDone: false, isBeforeStartDate: false};
-    if(obj.issueNumber > 0) {
-      obj.isIssuedTask = true;
-      obj.summary = taskSummaryRepository.getSummary(obj.issueNumber, now);
-      obj.notes = taskNoteRepository.getNotes(obj.issueNumber)
-      obj.latestNote = obj.notes[0];
-      obj.latestNoteText = obj.notes.length > 0 ? `${obj.notes[0].date}\n${obj.notes[0].body}`.split('\n').join('<br>') : '';
-      obj.isDone = obj.summary.isDone
-      obj.isBeforeStartDate = obj.summary.isBeforeStartDate
+    var task: Task;
+    if(obj.issueNumber > 0) {// managedTask
+      task = new ManagedTask(
+        obj.issueNumber,
+        obj.title,
+        taskSummaryRepository.getSummary(obj.issueNumber, now),
+        obj.nest,
+        taskNoteRepository.getNotes(obj.issueNumber)[0]
+      )
+    } else {
+      task = new NodeTask(obj.title, [], obj.nest);
     }
     // console.log(nest, line);
     if(lastNest == nest) {
     }
     if(lastNest < nest) {
-      parentObj = lastObj;
+      if(lastTask.isManaged) throw 'データ不正'; 
+      parentTask = lastTask as NodeTask;
     }
     if(lastNest > nest) {
-      parentObj = findParent(rootObj, nest)
+      parentTask = findParent(rootNodeTask, nest)
     }
     // console.log(parentObj);
-    parentObj.isTask = false;
-    parentObj.children.push(obj)
-    lastObj = obj;
+    parentTask.addChildren(task);
+    lastTask = task;
     lastNest = nest;
   });
   // console.log(rootObj.children);
-  return rootObj.children;
+  return rootNodeTask.children;
 }
 
 function setup(
@@ -201,11 +251,13 @@ function setup(
   now: Date
   ) {
   console.log('rootBody', rootBody)
+  var tasks = parse2(rootBody, taskSummaryRepository, taskNoteRepository, now)
+  console.log(tasks);
   var app = new Vue({
     el: '#app',
     data: {
       message: 'Hello Vue!',
-      list: parse(rootBody, taskSummaryRepository, taskNoteRepository, now),
+      list: tasks,
       rootBody: rootBody,
       filter: '',
       owner: config.owner,
@@ -235,7 +287,7 @@ function setup(
     },
     methods: {
       reload: function(){
-        this.list = parse(this.rootBody, taskSummaryRepository, taskNoteRepository, now);
+        this.list = parse2(this.rootBody, taskSummaryRepository, taskNoteRepository, now);
       },
       onPressedRootBodyEdit: function() {
         issueRepository.updateBody(taskRootIssueNumber, this.rootBody, (err, obj)=> this.reload())
