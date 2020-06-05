@@ -284,7 +284,7 @@ function () {
 
 exports.IssueRepositoryDummy = IssueRepositoryDummy;
 var text = "\n- \u5B66\u696D\n  - \u5BBF\u984C\n    - [5\u6708\u5206](/26)\n    - 6\u6708\u5206\n- \u904A\u3073\n  - [\u65E5\u672C\u65C5\u884C](/5)\n  - [\u4E16\u754C\u4E00\u5468](/27)\n".trim();
-var body26 = "\n### \u62C5\u5F53: \u3059\u305A\u304D\n### \u95A2\u4FC2\u8005: \u3055\u3068\u3046\n### DONE\u306E\u5B9A\u7FA9: \u7D42\u308F\u3089\u3059\n### \u30DE\u30A4\u30EB\u30B9\u30C8\u30FC\u30F3: \n### \u958B\u59CB\u65E5: 2020/05/11\n### \u7D42\u4E86\u65E5: 2020/05/29\n### \u5185\u5BB9\n5/28\u306B\u3084\u308B\n\u9811\u5F35\u308B\n### \u30EA\u30F3\u30AF:\n- [yahoo](http://www.yahoo.co.jp)\n".trim();
+var body26 = "\n### \u62C5\u5F53: \u3059\u305A\u304D\n### \u95A2\u4FC2\u8005: \u3055\u3068\u3046\n### DONE\u306E\u5B9A\u7FA9: \u7D42\u308F\u3089\u3059\n### \u30DE\u30A4\u30EB\u30B9\u30C8\u30FC\u30F3\n2020/06/06 \u59CB\u307E\u308A\u306E\u5100\n6/9 \u7D42\u308F\u308A\u306E\u5100\n### \u958B\u59CB\u65E5: 2020/05/11\n### \u7D42\u4E86\u65E5: 2020/05/29\n### \u5185\u5BB9\n5/28\u306B\u3084\u308B\n\u9811\u5F35\u308B\n### \u30EA\u30F3\u30AF:\n- [yahoo](http://www.yahoo.co.jp)\n".trim();
 var body27 = "\n### \u62C5\u5F53: \u3059\u305A\u304D\n### \u95A2\u4FC2\u8005: \u3055\u3068\u3046\n### DONE\u306E\u5B9A\u7FA9: \u3044\u3064\u304B\n### \u30DE\u30A4\u30EB\u30B9\u30C8\u30FC\u30F3: \n### \u958B\u59CB\u65E5: 2021/05/11\n### \u7D42\u4E86\u65E5: 2021/05/29\n### \u5185\u5BB9\n\u4E16\u754C\u4E00\u5468\u3059\u308B\n\u9811\u5F35\u308B\n### \u30EA\u30F3\u30AF:\n".trim();
 var body_5_done = "\n### \u62C5\u5F53: \u305F\u306A\u304B\n### \u95A2\u4FC2\u8005:\n### DONE\u306E\u5B9A\u7FA9: \u884C\u304F\n### \u30DE\u30A4\u30EB\u30B9\u30C8\u30FC\u30F3: \n### \u958B\u59CB\u65E5: 2020/05/11\n### \u7D42\u4E86\u65E5: 2020/05/29\n### \u5185\u5BB9\n\u5168\u56FD\u4E00\u5468\n### \u30EA\u30F3\u30AF:\n### \u5B8C\u4E86: 2020/05/29\n".trim();
 },{}],"infra/github/CommentRepositoryImpl.ts":[function(require,module,exports) {
@@ -483,25 +483,149 @@ function () {
 }();
 
 exports.CommentRepositoryDummy = CommentRepositoryDummy;
-},{}],"index.ts":[function(require,module,exports) {
+},{}],"domain/TaskSummary.ts":[function(require,module,exports) {
 "use strict";
+
+var __spreadArrays = this && this.__spreadArrays || function () {
+  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
+    s += arguments[i].length;
+  }
+
+  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
+    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
+      r[k] = a[j];
+    }
+  }
+
+  return r;
+};
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.Milestone = exports.DateInTask = void 0;
 
-var IssueRepositoryImpl_1 = require("./infra/github/IssueRepositoryImpl");
-
-var IssueRepositoryDummy_1 = require("./infra/github/IssueRepositoryDummy");
-
-var CommentRepositoryImpl_1 = require("./infra/github/CommentRepositoryImpl");
-
-var CommentRepositoryDummy_1 = require("./infra/github/CommentRepositoryDummy");
-
-var TaskSummaryRepository =
+var DateInTask =
 /** @class */
 function () {
-  function TaskSummaryRepository(issueRepository) {
+  function DateInTask(text, date) {
+    this.text = text;
+    this.date = date;
+  }
+
+  DateInTask.create = function (dateText, now) {
+    var parts = dateText.split('/').map(function (v) {
+      return parseInt(v);
+    });
+
+    if (parts.length == 2) {
+      // ex 6/23
+      parts = __spreadArrays([parts[0] <= 3 ? now.getFullYear() + 1 : now.getFullYear()], parts);
+    }
+
+    var date = new Date(parts.join('/'));
+    return new DateInTask(dateText, date);
+  };
+
+  return DateInTask;
+}();
+
+exports.DateInTask = DateInTask;
+
+var Milestone =
+/** @class */
+function () {
+  function Milestone(dateInTask, title) {
+    this.dateInTask = dateInTask;
+    this.title = title;
+  }
+
+  return Milestone;
+}();
+
+exports.Milestone = Milestone;
+},{}],"infra/tasksummary/TaskSummaryImpl.ts":[function(require,module,exports) {
+"use strict";
+
+var __spreadArrays = this && this.__spreadArrays || function () {
+  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
+    s += arguments[i].length;
+  }
+
+  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
+    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
+      r[k] = a[j];
+    }
+  }
+
+  return r;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.TaskSummaryRepositoryImpl = exports.MilestoneFactory = exports.DateInTaskFactory = void 0;
+
+var TaskSummary_1 = require("../../domain/TaskSummary");
+
+var DateInTaskFactory =
+/** @class */
+function () {
+  function DateInTaskFactory() {}
+
+  DateInTaskFactory.create = function (dateText, now) {
+    var parts = dateText.split('/').map(function (v) {
+      return parseInt(v);
+    });
+
+    if (parts.length == 2) {
+      // ex 6/23
+      parts = __spreadArrays([parts[0] <= 3 ? now.getFullYear() + 1 : now.getFullYear()], parts);
+    }
+
+    var date = new Date(parts.join('/'));
+    return new TaskSummary_1.DateInTask(dateText, date);
+  };
+
+  return DateInTaskFactory;
+}();
+
+exports.DateInTaskFactory = DateInTaskFactory;
+
+var MilestoneFactory =
+/** @class */
+function () {
+  function MilestoneFactory() {}
+
+  MilestoneFactory.create = function (text, now) {
+    if (text.indexOf(' ') == -1) {
+      throw "\u30DE\u30A4\u30EB\u30B9\u30C8\u30FC\u30F3\u304C\u30D1\u30FC\u30B9\u3067\u304D\u306A\u3044 " + text;
+    }
+
+    var dateText = text.slice(0, text.indexOf(' '));
+    var title = text.slice(text.indexOf(' ')).trim();
+    return new TaskSummary_1.Milestone(TaskSummary_1.DateInTask.create(dateText, now), title);
+  };
+
+  MilestoneFactory.createList = function (text, now) {
+    return text.split('\n').map(function (v) {
+      return v.trim();
+    }).filter(function (v) {
+      return v.length > 0;
+    }).map(function (v) {
+      return MilestoneFactory.create(v, now);
+    });
+  };
+
+  return MilestoneFactory;
+}();
+
+exports.MilestoneFactory = MilestoneFactory;
+
+var TaskSummaryRepositoryImpl =
+/** @class */
+function () {
+  function TaskSummaryRepositoryImpl(issueRepository) {
     this.issueRepository = issueRepository;
   }
   /**
@@ -510,7 +634,7 @@ function () {
    */
 
 
-  TaskSummaryRepository.convert = function (issue, now) {
+  TaskSummaryRepositoryImpl.convert = function (issue, now) {
     // bodyをパース
     var obj = issue.body.split('### ').slice(1).map(function (v) {
       var first = v.split('\n')[0];
@@ -556,18 +680,18 @@ function () {
     return obj;
   };
 
-  TaskSummaryRepository.prototype.getSummary = function (num, now) {
+  TaskSummaryRepositoryImpl.prototype.getSummary = function (num, now) {
     if (num <= 0) {
       throw '不正な番号';
     } // 担当,関係者,完了,DONEの定義,マイルストーン,開始日,終了日,内容,リンク
 
 
     var issue = this.issueRepository.getIssue(num);
-    var s = TaskSummaryRepository.convert(issue, now);
+    var s = TaskSummaryRepositoryImpl.convert(issue, now);
     return s;
   };
 
-  TaskSummaryRepository.prototype.create = function (title, cb) {
+  TaskSummaryRepositoryImpl.prototype.create = function (title, cb) {
     var body = "\n### \u62C5\u5F53: \n### \u95A2\u4FC2\u8005: \n### DONE\u306E\u5B9A\u7FA9: \n### \u30DE\u30A4\u30EB\u30B9\u30C8\u30FC\u30F3: \n### \u958B\u59CB\u65E5: \n### \u7D42\u4E86\u65E5: \n### \u5185\u5BB9: \n### \u30EA\u30F3\u30AF:\n".trim();
     this.issueRepository.createIssue({
       title: title,
@@ -582,8 +706,26 @@ function () {
     });
   };
 
-  return TaskSummaryRepository;
+  return TaskSummaryRepositoryImpl;
 }();
+
+exports.TaskSummaryRepositoryImpl = TaskSummaryRepositoryImpl;
+},{"../../domain/TaskSummary":"domain/TaskSummary.ts"}],"index.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var IssueRepositoryImpl_1 = require("./infra/github/IssueRepositoryImpl");
+
+var IssueRepositoryDummy_1 = require("./infra/github/IssueRepositoryDummy");
+
+var CommentRepositoryImpl_1 = require("./infra/github/CommentRepositoryImpl");
+
+var CommentRepositoryDummy_1 = require("./infra/github/CommentRepositoryDummy");
+
+var TaskSummaryImpl_1 = require("./infra/tasksummary/TaskSummaryImpl");
 
 var TaskNoteRepository =
 /** @class */
@@ -655,7 +797,7 @@ function () {
     commentRepository = new CommentRepositoryDummy_1.CommentRepositoryDummy();
   }
 
-  var taskSummaryRepository = new TaskSummaryRepository(issueRepository);
+  var taskSummaryRepository = new TaskSummaryImpl_1.TaskSummaryRepositoryImpl(issueRepository);
   var taskNoteRepository = new TaskNoteRepository(commentRepository);
   issueRepository.refresh(function (err) {
     if (err) {
@@ -875,7 +1017,7 @@ function zerofil(num) {
 }
 
 console.log(new Sugar.Date('2 weeks ago').getMonth());
-},{"./infra/github/IssueRepositoryImpl":"infra/github/IssueRepositoryImpl.ts","./infra/github/IssueRepositoryDummy":"infra/github/IssueRepositoryDummy.ts","./infra/github/CommentRepositoryImpl":"infra/github/CommentRepositoryImpl.ts","./infra/github/CommentRepositoryDummy":"infra/github/CommentRepositoryDummy.ts"}],"../../../../../../usr/local/lib/node_modules/parcel/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./infra/github/IssueRepositoryImpl":"infra/github/IssueRepositoryImpl.ts","./infra/github/IssueRepositoryDummy":"infra/github/IssueRepositoryDummy.ts","./infra/github/CommentRepositoryImpl":"infra/github/CommentRepositoryImpl.ts","./infra/github/CommentRepositoryDummy":"infra/github/CommentRepositoryDummy.ts","./infra/tasksummary/TaskSummaryImpl":"infra/tasksummary/TaskSummaryImpl.ts"}],"../../../../../../usr/local/lib/node_modules/parcel/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;

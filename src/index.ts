@@ -5,6 +5,8 @@ import {IssueRepositoryDummy} from './infra/github/IssueRepositoryDummy'
 import {CommentRepository} from './domain/github/CommentRepository'
 import {CommentRepositoryImpl} from './infra/github/CommentRepositoryImpl'
 import {CommentRepositoryDummy} from './infra/github/CommentRepositoryDummy'
+import { TaskSummaryRepository, TaskSummary } from './domain/TaskSummary'
+import { TaskSummaryRepositoryImpl } from './infra/tasksummary/TaskSummaryImpl'
 declare var Vue: any;
 declare var config: { 
   githubToken: string, 
@@ -14,89 +16,7 @@ declare var config: {
   isDevelop:boolean
 }
 
-type Summary = {
-  issueNumber: number,
-  isDone: boolean,
-  isBeforeStartDate: boolean
-}
 
-class TaskSummaryRepository {
-  constructor(private issueRepository: IssueRepository) {
-
-  }
-
-  /**
-   * issueをsummaryに変換
-   * @param issue 
-   */
-  static convert(issue, now: Date): Summary {
-    // bodyをパース
-    var obj = issue.body.split('### ').slice(1).map(v => {
-      var first = v.split('\n')[0];
-      var key = first.trim();
-      if(first.indexOf(':') != -1) {
-        key = first.split(':')[0].trim();
-      }
-      var value = v.slice(key.length + 1).trim();
-      return {key: key, value: value}
-    }).reduce((memo, v) => {
-      memo[v.key] = v.value;
-      return memo;
-    }, {})
-
-    // md形式のリンクリストをパース
-    obj['リンク'] = obj['リンク'].split('\n').map(v => {
-      if(v.indexOf('[') == -1) {
-        return {title: v, path: v, isHttp: false};
-      }
-      v = v.slice(v.indexOf('[') + 1);
-      var ary = v.split('](');
-      var title = ary[0];
-      var path = ary[1].slice(0, ary[1].length - 1);
-      return {title: title, path: path, isHttp: path.indexOf('http') == 0};
-    })
-
-    obj.isDone = obj['完了'] && obj['完了'].trim().length > 0;
-
-    obj.isBeforeStartDate = obj['開始日'] && new Date(obj['開始日']) && new Date(obj['開始日']).getTime() > now.getTime()
-
-    // issue番号
-    obj.issueNumber = issue.number
-    return obj;
-  }
-
-  getSummary(num: number, now: Date): Summary {
-    if(num <= 0) {
-      throw '不正な番号'
-    }
-    // 担当,関係者,完了,DONEの定義,マイルストーン,開始日,終了日,内容,リンク
-    var issue = this.issueRepository.getIssue(num);
-    var s = TaskSummaryRepository.convert(issue, now);
-    return s;
-  }
-
-  create(title, cb: (err?, issueNumber?: number)=>void) {
-    var body = `
-### 担当: 
-### 関係者: 
-### DONEの定義: 
-### マイルストーン: 
-### 開始日: 
-### 終了日: 
-### 内容: 
-### リンク:
-`.trim();
-
-    this.issueRepository.createIssue({title: title, body: body}, (err, obj) => {
-      if(err) {
-        cb(err);
-        return;
-      }
-      cb(null, obj.number)
-    })
-  }
-
-}
 
 class TaskNoteRepository {
   constructor(private commentRepository: CommentRepository) {
@@ -175,7 +95,7 @@ ${date}
     commentRepository = new CommentRepositoryDummy();
   }
 
-  const taskSummaryRepository: TaskSummaryRepository = new TaskSummaryRepository(issueRepository);
+  const taskSummaryRepository: TaskSummaryRepository = new TaskSummaryRepositoryImpl(issueRepository);
   const taskNoteRepository: TaskNoteRepository = new TaskNoteRepository(commentRepository);
 
   issueRepository.refresh((err) => {
@@ -221,7 +141,7 @@ type TaskViewModel = {
   issueNumber: number, 
   isTask: boolean, 
   isIssuedTask: boolean,
-  summary: Summary, 
+  summary: TaskSummary, 
   notes: {date: string, body: string}[], 
   latestNote: any, 
   latestNoteText: string,
