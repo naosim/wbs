@@ -99,6 +99,7 @@ th:first-child, td:first-child {
       <th class="date">4</th><th class="date">5</th><th class="date">6</th><th class="date">7</th><th class="date">8</th><th class="date">9</th><th class="date">10</th><th class="date">11</th><th class="date">12</th><th class="date">1</th><th class="date">2</th><th class="date">3</th>
 
       <th style="width: 200px">DONEの定義</th>
+      <th style="width: 200px">マイルストーン</th>
       <th>関係者</th>
       <th>完了</th>
       
@@ -115,6 +116,7 @@ th:first-child, td:first-child {
           <button class="disk" v-if="value.status=='opened'" v-on:click="value.status = 'closed'">-</button>
           {{ value.title }}
         </td>
+        <td></td>
         <td></td>
         <td></td>
         <td></td>
@@ -169,13 +171,15 @@ th:first-child, td:first-child {
           <td></td>
           <td></td>
           <td></td>
-          <td><span>{{ value.summary['DONEの定義'] }}</span></td>
-          <td><span>{{ value.summary['関係者'] }}</span></td>
+          <td><span v-html="br(value.summary['DONEの定義'])"></span></td>
+          <td><span v-html="br(value.summary['マイルストーン'])"></span></td>
+          <td><span v-html="br(value.summary['関係者'])"></span></td>
           <td><span>{{ value.summary['完了'] }}</span></td>
           <td><span v-html="br(value.summary['内容'])"></span></td>
           <td><span><p v-for="link in value.summary['リンク']"><a v-bind:href="link.path">{{link.title}}</a></p></span></td>
         </template>
         <template v-else>
+          <td></td>
           <td></td>
           <td></td>
           <td></td>
