@@ -82,6 +82,9 @@ th:first-child, td:first-child {
 .hilight {
   background: #ffa;
 }
+.done {
+  background: #ddd;
+}
 .notTask {
   color: #840;
 }
@@ -108,7 +111,7 @@ th:first-child, td:first-child {
       <th>リンク</th>
       
     </thead>
-    <tr v-for="value in expandList" v-bind:class="value.isHilight ? 'hilight' : ''">
+    <tr v-for="value in expandList" v-bind:class="[value.isTask && value.issueNumber>0 && value.summary.isDone ? 'done' : '', value.isHilight ? 'hilight' : '']">
       <template v-if="!value.isTask">
         <td class="notTask">
           <div v-bind:class="['whitespace', value.nest]"></div>

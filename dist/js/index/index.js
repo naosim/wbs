@@ -234,6 +234,10 @@ function () {
         this.map[issueNumber] = {
           body: text
         };
+      } else if (issueNumber == 5) {
+        this.map[issueNumber] = {
+          body: body_5_done
+        };
       } else {
         this.map[issueNumber] = {
           body: body26
@@ -273,8 +277,9 @@ function () {
 }();
 
 exports.IssueRepositoryDummy = IssueRepositoryDummy;
-var text = "\n- \u5B66\u696D\n  - \u5BBF\u984C\n    - [5\u6708\u5206](/26)\n    - 6\u6708\u5206\n".trim();
+var text = "\n- \u5B66\u696D\n  - \u5BBF\u984C\n    - [5\u6708\u5206](/26)\n    - 6\u6708\u5206\n- \u904A\u3073\n  - [\u65C5\u884C](/5)\n".trim();
 var body26 = "\n### \u62C5\u5F53: \u3059\u305A\u304D\n### \u95A2\u4FC2\u8005: \u3055\u3068\u3046\n### DONE\u306E\u5B9A\u7FA9: \u7D42\u308F\u3089\u3059\n### \u30DE\u30A4\u30EB\u30B9\u30C8\u30FC\u30F3: \n### \u958B\u59CB\u65E5: 2020/05/11\n### \u7D42\u4E86\u65E5: 2020/05/29\n### \u5185\u5BB9\n5/28\u306B\u3084\u308B\n\u9811\u5F35\u308B\n### \u30EA\u30F3\u30AF:\n- [yahoo](http://www.yahoo.co.jp)\n".trim();
+var body_5_done = "\n### \u62C5\u5F53: \u305F\u306A\u304B\n### \u95A2\u4FC2\u8005:\n### DONE\u306E\u5B9A\u7FA9: \u884C\u304F\n### \u30DE\u30A4\u30EB\u30B9\u30C8\u30FC\u30F3: \n### \u958B\u59CB\u65E5: 2020/05/11\n### \u7D42\u4E86\u65E5: 2020/05/29\n### \u5185\u5BB9\n\u5168\u56FD\u4E00\u5468\n### \u30EA\u30F3\u30AF:\n### \u5B8C\u4E86: 2020/05/29\n".trim();
 },{}],"infra/github/CommentRepositoryImpl.ts":[function(require,module,exports) {
 "use strict";
 
@@ -536,7 +541,8 @@ function () {
         path: path,
         isHttp: path.indexOf('http') == 0
       };
-    }); // issue番号
+    });
+    obj.isDone = obj['完了'] && obj['完了'].trim().length > 0; // issue番号
 
     obj.issueNumber = issue.number;
     return obj;
@@ -883,7 +889,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59468" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57858" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

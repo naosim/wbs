@@ -9,9 +9,12 @@ export class IssueRepositoryDummy implements IssueRepository {
     setTimeout(() => callback(), 100);
   }
   getIssue(issueNumber: number): any {
+    console.log(issueNumber)
     if(!this.map[issueNumber]) {
       if(issueNumber == this.taskRootIssueNumber) {
         this.map[issueNumber] = { body: text }
+      }else if(issueNumber == 5) {
+        this.map[issueNumber] = { body: body_5_done }
       } else {
         this.map[issueNumber] = { body: body26 };
       }
@@ -43,6 +46,8 @@ var text = `
   - 宿題
     - [5月分](/26)
     - 6月分
+- 遊び
+  - [旅行](/5)
 `.trim()
 
 var body26 = `
@@ -57,4 +62,18 @@ var body26 = `
 頑張る
 ### リンク:
 - [yahoo](http://www.yahoo.co.jp)
+`.trim();
+
+
+var body_5_done = `
+### 担当: たなか
+### 関係者:
+### DONEの定義: 行く
+### マイルストーン: 
+### 開始日: 2020/05/11
+### 終了日: 2020/05/29
+### 内容
+全国一周
+### リンク:
+### 完了: 2020/05/29
 `.trim();

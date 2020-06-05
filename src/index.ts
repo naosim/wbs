@@ -51,6 +51,8 @@ class TaskSummaryRepository {
       return {title: title, path: path, isHttp: path.indexOf('http') == 0};
     })
 
+    obj.isDone = obj['完了'] && obj['完了'].trim().length > 0;
+
     // issue番号
     obj.issueNumber = issue.number
     return obj;
