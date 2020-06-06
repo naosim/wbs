@@ -1,5 +1,5 @@
 /// <reference path="./sugar.d.ts" />
-import {NodeTask, TitleOnlyTask, ManagedTask, Task} from './domain/task'
+import {NodeTask, ManagedTask, TaskIf} from './domain/task'
 import {IssueRepository} from './domain/github/IssueRepository'
 import {IssueRepositoryImpl} from './infra/github/IssueRepositoryImpl'
 import {IssueRepositoryDummy} from './infra/github/IssueRepositoryDummy'
@@ -8,6 +8,7 @@ import {CommentRepositoryImpl} from './infra/github/CommentRepositoryImpl'
 import {CommentRepositoryDummy} from './infra/github/CommentRepositoryDummy'
 import { TaskSummaryRepository, TaskSummary } from './domain/TaskSummary'
 import { TaskSummaryRepositoryImpl } from './infra/tasksummary/TaskSummaryImpl'
+import { TaskId } from './domain/TaskId'
 declare var Vue: any;
 declare var config: { 
   githubToken: string, 
@@ -116,12 +117,12 @@ ${date}
   })
 })()
 
-function getExpandList(list) {
+function getExpandList(list: Array<NodeTask | ManagedTask>) {
   var result = [];
   list.forEach(v => {
     result.push(v)
-    if(v.status == 'opened') {
-      getExpandList(v.children).forEach(p => result.push(p))
+    if(v.isNode) {
+      getExpandList((v as NodeTask).children).forEach(p => result.push(p))
     }
   });
   return result;
@@ -196,9 +197,9 @@ type TaskViewModel = {
 //   return rootObj.children;
 // }
 
-function parse2(text, taskSummaryRepository: TaskSummaryRepository, taskNoteRepository: TaskNoteRepository, now: Date): Array<NodeTask | TitleOnlyTask | ManagedTask> {
+function parse2(text, taskSummaryRepository: TaskSummaryRepository, taskNoteRepository: TaskNoteRepository, now: Date): Array<NodeTask | ManagedTask> {
   var rootNodeTask = new NodeTask('_root', [], '');//{title: '_root', children: [], status: 'opened', isTask: false, summary:null, notes: null, latestNote: null, latestNoteText: ''};
-  var lastTask: Task = rootNodeTask;
+  var lastTask: TaskIf = rootNodeTask;
   var parentTask = rootNodeTask;
   var lastNest = 0;
   text.trim().split('\n').forEach(line => {
@@ -211,14 +212,14 @@ function parse2(text, taskSummaryRepository: TaskSummaryRepository, taskNoteRepo
       title = title.split(']')[0].slice(1);
     }
     var obj: TaskViewModel = {title: title, nest: `nest${nest}`, children: [], status: 'opened', issueNumber: issueNumber, isTask: true, isIssuedTask: false, summary:null, notes: null, latestNote: null, latestNoteText: '', isDone: false, isBeforeStartDate: false};
-    var task: Task;
+    var task: NodeTask | ManagedTask;
     if(obj.issueNumber > 0) {// managedTask
       task = new ManagedTask(
-        obj.issueNumber,
+        obj.issueNumber as TaskId,
         obj.title,
         taskSummaryRepository.getSummary(obj.issueNumber, now),
-        obj.nest,
-        taskNoteRepository.getNotes(obj.issueNumber)[0]
+        taskNoteRepository.getNotes(obj.issueNumber)[0],
+        obj.nest
       )
     } else {
       task = new NodeTask(obj.title, [], obj.nest);
@@ -306,14 +307,15 @@ function setup(
           this.reload();
         })
       },
-      createTask(obj) {
-        taskSummaryRepository.create(obj.title, (err, issueNumber) => {
+      createTask(nodeTask: NodeTask) {
+        var event = nodeTask.toMangedTask()
+        taskSummaryRepository.create(event, (err, issueNumber) => {
           if(err) {
             alert(err);
             throw err;
           }
-          console.log(obj);
-          this.rootBody = this.rootBody.split(obj.title).join(`[${obj.title}](${this.issueUrlPrefix}/${issueNumber})`)
+          console.log(nodeTask);
+          this.rootBody = this.rootBody.split(event.title).join(`[${event.title}](${this.issueUrlPrefix}/${issueNumber})`)
           this.onPressedRootBodyEdit();
         })
         

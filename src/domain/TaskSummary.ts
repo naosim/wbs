@@ -23,5 +23,8 @@ export class Milestone {
 
 export interface TaskSummaryRepository {
   getSummary(num: number, now: Date): TaskSummary;
-  create(title, cb: (err?, issueNumber?: number)=>void)
+  create(event: CreateTaskSummaryEvent, cb: (err?, issueNumber?: number)=>void)
+}
+export class CreateTaskSummaryEvent {
+  constructor(readonly title: string) {}
 }

@@ -118,9 +118,7 @@ th:first-child, td:first-child {
       <template v-if="value.isNode">
         <td class="notTask">
           <div v-bind:class="['whitespace', value.nest]"></div>
-          <button class="disk" v-if="value.status=='closed'" v-on:click="value.status = 'opened'">+</button>
-          <button class="disk" v-if="value.status=='opened'" v-on:click="value.status = 'closed'">-</button>
-          {{ value.title }}
+          <span class="disk">・</span>{{ value.title }}
         </td>
         <td></td>
         <td></td>
@@ -148,7 +146,7 @@ th:first-child, td:first-child {
       <template v-if="!value.isNode">
         <td class="task">
           <div v-bind:class="['whitespace', value.nest]"></div>
-          <span class="disk">*</span>
+          <span class="disk">・</span>
           <a v-if="value.isManaged" v-bind:href="issueUrlPrefix + '/' + value.taskId" target="_blank">{{ value.title }}</a>
           <span v-if="value.isTitleOnly">{{ value.title }}</span> <button v-if="value.isTitleOnly" v-on:click="createTask(value)">> task</button>
         </td>

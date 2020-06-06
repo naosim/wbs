@@ -117,13 +117,155 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   }
 
   return newRequire;
-})({"domain/task.ts":[function(require,module,exports) {
+})({"domain/TaskSummary.ts":[function(require,module,exports) {
+"use strict";
+
+var __spreadArrays = this && this.__spreadArrays || function () {
+  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
+    s += arguments[i].length;
+  }
+
+  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
+    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
+      r[k] = a[j];
+    }
+  }
+
+  return r;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.CreateTaskSummaryEvent = exports.Milestone = exports.DateInTask = void 0;
+
+var DateInTask =
+/** @class */
+function () {
+  function DateInTask(text, date) {
+    this.text = text;
+    this.date = date;
+  }
+
+  DateInTask.create = function (dateText, now) {
+    var parts = dateText.split('/').map(function (v) {
+      return parseInt(v);
+    });
+
+    if (parts.length == 2) {
+      // ex 6/23
+      parts = __spreadArrays([parts[0] <= 3 ? now.getFullYear() + 1 : now.getFullYear()], parts);
+    }
+
+    var date = new Date(parts.join('/'));
+    return new DateInTask(dateText, date);
+  };
+
+  return DateInTask;
+}();
+
+exports.DateInTask = DateInTask;
+
+var Milestone =
+/** @class */
+function () {
+  function Milestone(dateInTask, title) {
+    this.dateInTask = dateInTask;
+    this.title = title;
+  }
+
+  return Milestone;
+}();
+
+exports.Milestone = Milestone;
+
+var CreateTaskSummaryEvent =
+/** @class */
+function () {
+  function CreateTaskSummaryEvent(title) {
+    this.title = title;
+  }
+
+  return CreateTaskSummaryEvent;
+}();
+
+exports.CreateTaskSummaryEvent = CreateTaskSummaryEvent;
+},{}],"domain/task.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.ManagedTask = exports.TitleOnlyTask = exports.NodeTask = void 0;
+exports.ManagedTask = exports.NodeTask = void 0;
+
+var TaskSummary_1 = require("./TaskSummary"); // class Task implements TaskIf {
+//   isNode: boolean;
+//   isTitleOnly: boolean;
+//   isManaged: boolean;
+//   title: string;
+//   private constructor(
+//     public nest: string, 
+//     private _node: NodeTask, 
+//     private _titleOnly: TitleOnlyTask, 
+//     private _managed: ManagedTask
+//   ) {
+//     var task: TaskIf;
+//     if(_node) {
+//       task = _node;
+//     } else if(_titleOnly) {
+//       task = _titleOnly;
+//     } else if(_managed) {
+//       task = _managed;
+//     } else {
+//       throw '不明なタスク'
+//     }
+//     this.title = task.title;
+//     this.isNode = task.isNode;
+//     this.isTitleOnly = task.isTitleOnly;
+//     this.isManaged = task.isManaged;
+//   }
+//   addChild(task: Task) {
+//     if(this.isManaged) {
+//       throw 'mangedにchildは追加できません'
+//     }
+//     if(this.isTitleOnly) {
+//       this._node = new NodeTask(this.title, [task.value]);
+//       this.title = this._node.title;
+//       this.isNode = this._node.isNode;
+//       this.isTitleOnly = this._node.isTitleOnly;
+//       this.isManaged = this._node.isManaged;
+//       return 
+//     }
+//     if(this.isManaged) {
+//       this.node.addChildren(task.value);
+//     }
+//   }
+//   get node(): NodeTask {
+//     if(!this.isNode) throw 'nodeでない'
+//     return this._node;
+//   }
+//   get titleOnly(): TitleOnlyTask {
+//     if(!this.isTitleOnly) throw 'titleonlyでない'
+//     return this._titleOnly;
+//   }
+//   get managed(): ManagedTask {
+//     if(!this.isManaged) throw 'managedでない'
+//     return this._managed;
+//   }
+//   get value(): NodeTask | TitleOnlyTask | ManagedTask {
+//     return this._node || this._titleOnly || this._managed
+//   }
+//   static createNode(node: NodeTask, nest: string):Task {
+//     return new Task(nest, node, null, null)
+//   }
+//   static createTitleOnly(titleOnly: TitleOnlyTask, nest: string):Task {
+//     return new Task(nest, null, titleOnly, null)
+//   }
+//   static createManaged(managed: ManagedTask, nest: string):Task {
+//     return new Task(nest, null, null, managed)
+//   }
+// }
+
 
 var NodeTask =
 /** @class */
@@ -150,36 +292,36 @@ function () {
     this.isTitleOnly = false;
   };
 
+  NodeTask.prototype.toMangedTask = function () {
+    if (!this.isTitleOnly) {
+      throw 'title onlyでない';
+    }
+
+    return new TaskSummary_1.CreateTaskSummaryEvent(this.title);
+  };
+
   return NodeTask;
 }();
 
-exports.NodeTask = NodeTask;
-
-var TitleOnlyTask =
-/** @class */
-function () {
-  function TitleOnlyTask(title, nest) {
-    this.title = title;
-    this.nest = nest;
-    this.isNode = false;
-    this.isTitleOnly = true;
-    this.isManaged = false;
-  }
-
-  return TitleOnlyTask;
-}();
-
-exports.TitleOnlyTask = TitleOnlyTask;
+exports.NodeTask = NodeTask; // export class TitleOnlyTask implements TaskIf {
+//   isNode: boolean = false;
+//   isTitleOnly: boolean = true;
+//   isManaged: boolean = false;
+//   constructor(
+//     public title: string,
+//     public nest: string
+//   ) {}
+// }
 
 var ManagedTask =
 /** @class */
 function () {
-  function ManagedTask(taskId, title, summary, nest, latestNote) {
+  function ManagedTask(taskId, title, summary, latestNote, nest) {
     this.taskId = taskId;
     this.title = title;
     this.summary = summary;
-    this.nest = nest;
     this.latestNote = latestNote;
+    this.nest = nest;
     this.isNode = false;
     this.isTitleOnly = false;
     this.isManaged = true;
@@ -192,7 +334,7 @@ function () {
 }();
 
 exports.ManagedTask = ManagedTask;
-},{}],"infra/github/IssueRepositoryImpl.ts":[function(require,module,exports) {
+},{"./TaskSummary":"domain/TaskSummary.ts"}],"infra/github/IssueRepositoryImpl.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -558,67 +700,6 @@ function () {
 }();
 
 exports.CommentRepositoryDummy = CommentRepositoryDummy;
-},{}],"domain/TaskSummary.ts":[function(require,module,exports) {
-"use strict";
-
-var __spreadArrays = this && this.__spreadArrays || function () {
-  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
-    s += arguments[i].length;
-  }
-
-  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
-    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
-      r[k] = a[j];
-    }
-  }
-
-  return r;
-};
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.Milestone = exports.DateInTask = void 0;
-
-var DateInTask =
-/** @class */
-function () {
-  function DateInTask(text, date) {
-    this.text = text;
-    this.date = date;
-  }
-
-  DateInTask.create = function (dateText, now) {
-    var parts = dateText.split('/').map(function (v) {
-      return parseInt(v);
-    });
-
-    if (parts.length == 2) {
-      // ex 6/23
-      parts = __spreadArrays([parts[0] <= 3 ? now.getFullYear() + 1 : now.getFullYear()], parts);
-    }
-
-    var date = new Date(parts.join('/'));
-    return new DateInTask(dateText, date);
-  };
-
-  return DateInTask;
-}();
-
-exports.DateInTask = DateInTask;
-
-var Milestone =
-/** @class */
-function () {
-  function Milestone(dateInTask, title) {
-    this.dateInTask = dateInTask;
-    this.title = title;
-  }
-
-  return Milestone;
-}();
-
-exports.Milestone = Milestone;
 },{}],"infra/tasksummary/TaskSummaryImpl.ts":[function(require,module,exports) {
 "use strict";
 
@@ -766,10 +847,10 @@ function () {
     return s;
   };
 
-  TaskSummaryRepositoryImpl.prototype.create = function (title, cb) {
+  TaskSummaryRepositoryImpl.prototype.create = function (event, cb) {
     var body = "\n### \u62C5\u5F53: \n### \u95A2\u4FC2\u8005: \n### DONE\u306E\u5B9A\u7FA9: \n### \u30DE\u30A4\u30EB\u30B9\u30C8\u30FC\u30F3: \n### \u958B\u59CB\u65E5: \n### \u7D42\u4E86\u65E5: \n### \u5185\u5BB9: \n### \u30EA\u30F3\u30AF:\n".trim();
     this.issueRepository.createIssue({
-      title: title,
+      title: event.title,
       body: body
     }, function (err, obj) {
       if (err) {
@@ -900,7 +981,7 @@ function getExpandList(list) {
   list.forEach(function (v) {
     result.push(v);
 
-    if (v.status == 'opened') {
+    if (v.isNode) {
       getExpandList(v.children).forEach(function (p) {
         return result.push(p);
       });
@@ -997,7 +1078,7 @@ function parse2(text, taskSummaryRepository, taskNoteRepository, now) {
 
     if (obj.issueNumber > 0) {
       // managedTask
-      task = new task_1.ManagedTask(obj.issueNumber, obj.title, taskSummaryRepository.getSummary(obj.issueNumber, now), obj.nest, taskNoteRepository.getNotes(obj.issueNumber)[0]);
+      task = new task_1.ManagedTask(obj.issueNumber, obj.title, taskSummaryRepository.getSummary(obj.issueNumber, now), taskNoteRepository.getNotes(obj.issueNumber)[0], obj.nest);
     } else {
       task = new task_1.NodeTask(obj.title, [], obj.nest);
     } // console.log(nest, line);
@@ -1089,17 +1170,18 @@ function setup(taskRootIssueNumber, rootBody, taskSummaryRepository, taskNoteRep
           _this.reload();
         });
       },
-      createTask: function createTask(obj) {
+      createTask: function createTask(nodeTask) {
         var _this = this;
 
-        taskSummaryRepository.create(obj.title, function (err, issueNumber) {
+        var event = nodeTask.toMangedTask();
+        taskSummaryRepository.create(event, function (err, issueNumber) {
           if (err) {
             alert(err);
             throw err;
           }
 
-          console.log(obj);
-          _this.rootBody = _this.rootBody.split(obj.title).join("[" + obj.title + "](" + _this.issueUrlPrefix + "/" + issueNumber + ")");
+          console.log(nodeTask);
+          _this.rootBody = _this.rootBody.split(event.title).join("[" + event.title + "](" + _this.issueUrlPrefix + "/" + issueNumber + ")");
 
           _this.onPressedRootBodyEdit();
         });

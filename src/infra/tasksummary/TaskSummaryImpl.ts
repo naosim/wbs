@@ -1,4 +1,4 @@
-import { TaskSummary, DateInTask, Milestone, TaskSummaryRepository } from "../../domain/TaskSummary";
+import { TaskSummary, DateInTask, Milestone, CreateTaskSummaryEvent, TaskSummaryRepository } from "../../domain/TaskSummary";
 import { IssueRepository } from "../../domain/github/IssueRepository";
 export class DateInTaskFactory {
   static create(dateText: string, now: Date): DateInTask {
@@ -80,7 +80,7 @@ export class TaskSummaryRepositoryImpl implements TaskSummaryRepository {
     return s;
   }
 
-  create(title, cb: (err?, issueNumber?: number)=>void) {
+  create(event: CreateTaskSummaryEvent, cb: (err?, issueNumber?: number)=>void) {
     var body = `
 ### 担当: 
 ### 関係者: 
@@ -92,7 +92,7 @@ export class TaskSummaryRepositoryImpl implements TaskSummaryRepository {
 ### リンク:
 `.trim();
 
-    this.issueRepository.createIssue({title: title, body: body}, (err, obj) => {
+    this.issueRepository.createIssue({title: event.title, body: body}, (err, obj) => {
       if(err) {
         cb(err);
         return;
