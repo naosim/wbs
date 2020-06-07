@@ -11,8 +11,11 @@ import { TaskSummaryRepositoryImpl } from './infra/tasksummary/TaskSummaryImpl'
 import { TaskId } from './domain/TaskId'
 import { Note, Notes, TaskNoteRepository } from './domain/TaskNote'
 import { TaskNoteRepositoryImpl } from './infra/tasknote/TaskNoteRepositoryImpl'
-import { TaskTreeRepository, TaskTitleAndId } from './domain/taskroot/TaskTree'
+import { TaskTreeRepository } from './domain/TaskTree'
 import { TaskListFactory } from './TaskListFactory'
+import { TitleOnlyToMangedService } from './service/TitleOnlyToMangedService'
+import { UpdateNoteBodyService } from './service/UpdateNoteBodyService'
+import { CreateEmptyNoteService } from './service/CreateEmptyNoteService'
 declare var Vue: any;
 declare var config: { 
   githubToken: string, 
@@ -21,6 +24,15 @@ declare var config: {
   taskRootIssueNumber: number ,
   isDevelop:boolean
 }
+
+class Services {
+  constructor(
+    readonly titleOnlyToMangedService: TitleOnlyToMangedService,
+    readonly updateNoteBodyService: UpdateNoteBodyService,
+    readonly createEmptyNoteService: CreateEmptyNoteService
+  ) {}
+}
+
 
 (() => {
   var issueRepository: IssueRepository;
@@ -77,6 +89,11 @@ function setup(
     if(err) throw err;
     app.reload();
   }
+  var services = new Services(
+    new TitleOnlyToMangedService(taskSummaryRepository, taskTreeRepository),
+    new UpdateNoteBodyService(taskNoteRepository),
+    new CreateEmptyNoteService(taskNoteRepository, now)
+  )
   var app = new Vue({
     el: '#app',
     data: {
@@ -121,26 +138,17 @@ function setup(
         return text.split('\n').join('<br>')
       },
       createTask(titleOnlyTask: TitleOnlyTask) {
-        var event = titleOnlyTask.toMangedTask();
-        taskSummaryRepository.create(event, (err, issueNumber) => {
-          if(err) {
-            alert(err);
-            throw err;
-          }
-          taskTreeRepository.updateTaskTitleAndId(new TaskTitleAndId(event.title, issueNumber as TaskId), callbackToReload)
-        })
-        
+        services.titleOnlyToMangedService.convert(titleOnlyTask, callbackToReload)
       },
       editNote(note: Note, selector) {
-        var body = document.querySelector(selector).value;
-        var event = note.updateBody(body);
-        taskNoteRepository.update(event, callbackToReload)
+        var body = document.querySelector(selector).value.trim()
+        services.updateNoteBodyService.update(note, body, callbackToReload)
       },
       createNote(taskId: TaskId) {
-        var event = taskNoteRepository.getNotes(taskId).createEmptyNote(now);
-        taskNoteRepository.createEmptyNote(event, callbackToReload)
+        services.createEmptyNoteService.create(taskId, callbackToReload)
       }
     }
   })
+
 }
 
