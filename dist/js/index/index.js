@@ -282,7 +282,7 @@ function () {
 
 exports.IssueRepositoryDummy = IssueRepositoryDummy;
 var text = "\n- \u5B66\u696D\n  - \u5BBF\u984C\n    - [5\u6708\u5206](/26)\n    - 6\u6708\u5206\n- \u904A\u3073\n  - [\u65E5\u672C\u65C5\u884C](/5)\n  - [\u4E16\u754C\u4E00\u5468](/27)\n".trim();
-var body26 = "\n### \u62C5\u5F53: \u3059\u305A\u304D\n### \u95A2\u4FC2\u8005: \u3055\u3068\u3046\n### DONE\u306E\u5B9A\u7FA9: \u7D42\u308F\u3089\u3059\n### \u30DE\u30A4\u30EB\u30B9\u30C8\u30FC\u30F3\n2020/06/06 \u59CB\u307E\u308A\u306E\u5100\n6/9 \u7D42\u308F\u308A\u306E\u5100\n### \u958B\u59CB\u65E5: 2020/05/11\n### \u7D42\u4E86\u65E5: 2020/05/29\n### \u5185\u5BB9\n5/28\u306B\u3084\u308B\n\u9811\u5F35\u308B\n### \u30EA\u30F3\u30AF:\n- [yahoo](http://www.yahoo.co.jp)\n".trim();
+var body26 = "\n### \u62C5\u5F53: \u3059\u305A\u304D\n### \u95A2\u4FC2\u8005: \u3055\u3068\u3046\n### DONE\u306E\u5B9A\u7FA9: \u7D42\u308F\u3089\u3059\n### \u30DE\u30A4\u30EB\u30B9\u30C8\u30FC\u30F3\n2020/06/06 \u59CB\u307E\u308A\u306E\u5100\n7/9 \u7D42\u308F\u308A\u306E\u5100\n### \u958B\u59CB\u65E5: 2020/05/11\n### \u7D42\u4E86\u65E5: 2020/05/29\n### \u5185\u5BB9\n5/28\u306B\u3084\u308B\n\u9811\u5F35\u308B\n### \u30EA\u30F3\u30AF:\n- [yahoo](http://www.yahoo.co.jp)\n".trim();
 var body27 = "\n### \u62C5\u5F53: \u3059\u305A\u304D\n### \u95A2\u4FC2\u8005: \u3055\u3068\u3046\n### DONE\u306E\u5B9A\u7FA9: \u3044\u3064\u304B\n### \u30DE\u30A4\u30EB\u30B9\u30C8\u30FC\u30F3: \n### \u958B\u59CB\u65E5: 2021/05/11\n### \u7D42\u4E86\u65E5: 2021/05/29\n### \u5185\u5BB9\n\u4E16\u754C\u4E00\u5468\u3059\u308B\n\u9811\u5F35\u308B\n### \u30EA\u30F3\u30AF:\n".trim();
 var body_5_done = "\n### \u62C5\u5F53: \u305F\u306A\u304B\n### \u95A2\u4FC2\u8005:\n### DONE\u306E\u5B9A\u7FA9: \u884C\u304F\n### \u30DE\u30A4\u30EB\u30B9\u30C8\u30FC\u30F3: \n### \u958B\u59CB\u65E5: 2020/05/11\n### \u7D42\u4E86\u65E5: 2020/05/29\n### \u5185\u5BB9\n\u5168\u56FD\u4E00\u5468\n### \u30EA\u30F3\u30AF:\n### \u5B8C\u4E86: 2020/05/29\n".trim();
 },{}],"infra/github/CommentRepositoryImpl.ts":[function(require,module,exports) {
@@ -502,7 +502,57 @@ var __spreadArrays = this && this.__spreadArrays || function () {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.CreateTaskSummaryEvent = exports.Milestone = exports.DateInTask = void 0;
+exports.CreateTaskSummaryEvent = exports.DateInTask = exports.Milestones = exports.Milestone = void 0;
+
+var Milestone =
+/** @class */
+function () {
+  function Milestone(dateInTask, title, isDone, now) {
+    this.dateInTask = dateInTask;
+    this.title = title;
+    this.isDone = isDone;
+    this.now = now;
+  }
+
+  Object.defineProperty(Milestone.prototype, "dateText", {
+    get: function get() {
+      return this.dateInTask.text;
+    },
+    enumerable: false,
+    configurable: true
+  });
+
+  Milestone.prototype.isWithin = function (pastDate) {
+    if (this.isDone) {
+      return false;
+    }
+
+    return this.dateInTask.isWithin(pastDate);
+  };
+
+  Object.defineProperty(Milestone.prototype, "isWithinOneWeek", {
+    get: function get() {
+      return this.isWithin(new Date(this.now.getTime() + 7 * 24 * 60 * 60 * 1000));
+    },
+    enumerable: false,
+    configurable: true
+  });
+  return Milestone;
+}();
+
+exports.Milestone = Milestone;
+
+var Milestones =
+/** @class */
+function () {
+  function Milestones(list) {
+    this.list = list;
+  }
+
+  return Milestones;
+}();
+
+exports.Milestones = Milestones;
 
 var DateInTask =
 /** @class */
@@ -511,6 +561,10 @@ function () {
     this.text = text;
     this.date = date;
   }
+
+  DateInTask.prototype.isWithin = function (pastDate) {
+    return this.date.getTime() <= pastDate.getTime();
+  };
 
   DateInTask.create = function (dateText, now) {
     var parts = dateText.split('/').map(function (v) {
@@ -530,19 +584,6 @@ function () {
 }();
 
 exports.DateInTask = DateInTask;
-
-var Milestone =
-/** @class */
-function () {
-  function Milestone(dateInTask, title) {
-    this.dateInTask = dateInTask;
-    this.title = title;
-  }
-
-  return Milestone;
-}();
-
-exports.Milestone = Milestone;
 
 var CreateTaskSummaryEvent =
 /** @class */
@@ -615,17 +656,20 @@ function () {
 
     var dateText = text.slice(0, text.indexOf(' '));
     var title = text.slice(text.indexOf(' ')).trim();
-    return new TaskSummary_1.Milestone(TaskSummary_1.DateInTask.create(dateText, now), title);
+    var isDone = ['done', '完了', '了'].some(function (key) {
+      return title.indexOf("[" + key + "]") != -1;
+    });
+    return new TaskSummary_1.Milestone(TaskSummary_1.DateInTask.create(dateText, now), title, isDone, now);
   };
 
-  MilestoneFactory.createList = function (text, now) {
-    return text.split('\n').map(function (v) {
+  MilestoneFactory.createMilestones = function (text, now) {
+    return new TaskSummary_1.Milestones(text.split('\n').map(function (v) {
       return v.trim();
     }).filter(function (v) {
       return v.length > 0;
     }).map(function (v) {
       return MilestoneFactory.create(v, now);
-    });
+    }));
   };
 
   return MilestoneFactory;
@@ -685,7 +729,8 @@ function () {
       };
     });
     obj.isDone = obj['完了'] && obj['完了'].trim().length > 0;
-    obj.isBeforeStartDate = obj['開始日'] && new Date(obj['開始日']) && new Date(obj['開始日']).getTime() > now.getTime(); // issue番号
+    obj.isBeforeStartDate = obj['開始日'] && new Date(obj['開始日']) && new Date(obj['開始日']).getTime() > now.getTime();
+    obj.milestones = MilestoneFactory.createMilestones(obj['マイルストーン'], now); // issue番号
 
     obj.issueNumber = issue.number;
     return obj;

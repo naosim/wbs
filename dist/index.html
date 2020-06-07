@@ -4,6 +4,10 @@
 html {
   margin: 12px;
 }
+p {
+  margin: 2px;
+  line-height: 1.4em;
+}
 th, td {
   font-size: 12px;
 }
@@ -90,6 +94,9 @@ th:first-child, td:first-child {
 }
 .notTask {
   color: #840;
+}
+.caution {
+  background: #ff8400;
 }
 </style>
 <div id="app">
@@ -179,7 +186,7 @@ th:first-child, td:first-child {
           <td></td>
           <td></td>
           <td><span v-html="br(value.summary['DONEの定義'])"></span></td>
-          <td><span v-html="br(value.summary['マイルストーン'])"></span></td>
+          <td><p v-for="milestone in value.summary.milestones.list" v-bind:class="milestone.isWithinOneWeek ? 'caution' : ''">{{milestone.dateInTask.text}} {{milestone.title}}</p></td>
           <td><span v-html="br(value.summary['関係者'])"></span></td>
           <td><span>{{ value.summary['完了'] }}</span></td>
           <td><span v-html="br(value.summary['内容'])"></span></td>

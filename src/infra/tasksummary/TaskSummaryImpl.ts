@@ -1,4 +1,4 @@
-import { TaskSummary, DateInTask, Milestone, CreateTaskSummaryEvent, TaskSummaryRepository } from "../../domain/TaskSummary";
+import { TaskSummary, DateInTask, Milestone, Milestones, CreateTaskSummaryEvent, TaskSummaryRepository } from "../../domain/TaskSummary";
 import { IssueRepository } from "../../domain/github/IssueRepository";
 export class DateInTaskFactory {
   static create(dateText: string, now: Date): DateInTask {
@@ -18,10 +18,11 @@ export class MilestoneFactory {
     }
     var dateText = text.slice(0, text.indexOf(' '));
     var title = text.slice(text.indexOf(' ')).trim();
-    return new Milestone(DateInTask.create(dateText, now), title);    
+    var isDone = ['done', '完了', '了'].some(key => title.indexOf(`[${key}]`) != -1);
+    return new Milestone(DateInTask.create(dateText, now), title, isDone, now);    
   }
-  static createList(text: string, now: Date): Milestone[] {
-    return text.split('\n').map(v => v.trim()).filter(v => v.length > 0).map(v => MilestoneFactory.create(v, now))
+  static createMilestones(text: string, now: Date): Milestones {
+    return new Milestones(text.split('\n').map(v => v.trim()).filter(v => v.length > 0).map(v => MilestoneFactory.create(v, now)))
   }
 }
 
@@ -63,6 +64,8 @@ export class TaskSummaryRepositoryImpl implements TaskSummaryRepository {
     obj.isDone = obj['完了'] && obj['完了'].trim().length > 0;
 
     obj.isBeforeStartDate = obj['開始日'] && new Date(obj['開始日']) && new Date(obj['開始日']).getTime() > now.getTime()
+
+    obj.milestones = MilestoneFactory.createMilestones(obj['マイルストーン'], now)
 
     // issue番号
     obj.issueNumber = issue.number

@@ -1,5 +1,5 @@
-import { IssueRepository } from "../github/IssueRepository";
-import { TaskId } from "../TaskId";
+import { IssueRepository } from "./github/IssueRepository";
+import { TaskId } from "./TaskId";
 
 export class TreeNode<T> {
   constructor(readonly value: T, readonly children: TreeNode<T>[] = []) {}
