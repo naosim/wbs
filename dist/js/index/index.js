@@ -647,15 +647,32 @@ exports.DateInTaskFactory = DateInTaskFactory;
 var MilestoneFactory =
 /** @class */
 function () {
-  function MilestoneFactory() {}
+  function MilestoneFactory() {} // パターン
+  // 2020/1/1 タスク名
+  // 2020/1/1　タスク名全角区切り
+  // 1/1 タスク名
+  // タスク名 ほげ
+  // 1/末 タスク名
+
 
   MilestoneFactory.create = function (text, now) {
-    if (text.indexOf(' ') == -1) {
-      throw "\u30DE\u30A4\u30EB\u30B9\u30C8\u30FC\u30F3\u304C\u30D1\u30FC\u30B9\u3067\u304D\u306A\u3044 " + text;
+    var splitKey = ' ';
+
+    if (text.indexOf(splitKey) == -1) {
+      splitKey = '　';
+
+      if (text.indexOf(splitKey) == -1) {
+        // throw `マイルストーンがパースできない ${text}`
+        var title = text;
+        var isDone = ['done', '完了', '了'].some(function (key) {
+          return title.indexOf("[" + key + "]") != -1;
+        });
+        return new TaskSummary_1.Milestone(new TaskSummary_1.DateInTask('', new Date('2999/12/31')), title, isDone, now);
+      }
     }
 
-    var dateText = text.slice(0, text.indexOf(' '));
-    var title = text.slice(text.indexOf(' ')).trim();
+    var dateText = text.slice(0, text.indexOf(splitKey));
+    var title = text.slice(text.indexOf(splitKey)).trim();
     var isDone = ['done', '完了', '了'].some(function (key) {
       return title.indexOf("[" + key + "]") != -1;
     });

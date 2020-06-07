@@ -12,12 +12,25 @@ export class DateInTaskFactory {
 }
 
 export class MilestoneFactory {
+  // パターン
+  // 2020/1/1 タスク名
+  // 2020/1/1　タスク名全角区切り
+  // 1/1 タスク名
+  // タスク名 ほげ
+  // 1/末 タスク名
   static create(text: string, now: Date): Milestone {
-    if(text.indexOf(' ') == -1) {
-      throw `マイルストーンがパースできない ${text}`
+    var splitKey = ' '
+    if(text.indexOf(splitKey) == -1) {
+      splitKey = '　';
+      if(text.indexOf(splitKey) == -1) {
+        // throw `マイルストーンがパースできない ${text}`
+        var title = text;
+        var isDone = ['done', '完了', '了'].some(key => title.indexOf(`[${key}]`) != -1);
+        return new Milestone(new DateInTask('', new Date('2999/12/31')), title, isDone, now);
+      }
     }
-    var dateText = text.slice(0, text.indexOf(' '));
-    var title = text.slice(text.indexOf(' ')).trim();
+    var dateText = text.slice(0, text.indexOf(splitKey));
+    var title = text.slice(text.indexOf(splitKey)).trim();
     var isDone = ['done', '完了', '了'].some(key => title.indexOf(`[${key}]`) != -1);
     return new Milestone(DateInTask.create(dateText, now), title, isDone, now);    
   }

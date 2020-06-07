@@ -124,7 +124,7 @@ th:first-child, td:first-child {
       <th>リンク</th>
       
     </thead>
-    <tr v-for="value in decoratedList" v-bind:class="[value.isIssuedTask && value.isDone ? 'done' : '', value.isHilight ? 'hilight' : '']">
+    <tr v-for="value in decoratedList" v-bind:class="[value.isManaged && value.isDone ? 'done' : '', value.isHilight ? 'hilight' : '']">
       <template v-if="value.isNode">
         <td class="notTask">
           <div v-bind:class="['whitespace', value.nest]"></div>
