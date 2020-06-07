@@ -154,11 +154,11 @@ th:first-child, td:first-child {
           <td><span>{{ value.summary['担当'] }}</span></td>
           <td>
             <template v-if="value.latestNote">
-              {{value.latestNote.date}}<br>
+              {{value.latestNote.date.toLocaleDateString()}}<br>
               <textarea v-bind:id="'comment' + value.latestNote.id" style="width: 95%; height: 64px">{{value.latestNote.body}}</textarea><br>
-              <button v-on:click="editComment(value.issueNumber, value.latestNote.id, value.latestNote.date, '#comment' + value.latestNote.id)">更新</button>
+              <button v-on:click="editNote(value.latestNote, '#comment' + value.latestNote.id)">更新</button>
             </template>
-            <button v-on:click="createNote(value.issueNumber)">新規</button>
+            <button v-on:click="createNote(value.taskId)">新規</button>
             
         
           </td>

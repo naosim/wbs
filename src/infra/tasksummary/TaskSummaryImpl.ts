@@ -27,8 +27,7 @@ export class MilestoneFactory {
 
 export class TaskSummaryRepositoryImpl implements TaskSummaryRepository {
   constructor(private issueRepository: IssueRepository) {
-
-  }
+}
 
   /**
    * issueをsummaryに変換

@@ -9,7 +9,6 @@ export class IssueRepositoryDummy implements IssueRepository {
     setTimeout(() => callback(), 100);
   }
   getIssue(issueNumber: number): any {
-    console.log(issueNumber)
     if(!this.map[issueNumber]) {
       if(issueNumber == this.taskRootIssueNumber) {
         this.map[issueNumber] = { body: text }

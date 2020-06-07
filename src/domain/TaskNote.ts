@@ -9,7 +9,7 @@ export class Note {
 export class Notes {
   constructor(readonly taskId: TaskId, readonly list: Note[]) {}
   get latestNote(): Note | null {
-    return this.list.length > 0 ? this.list[this.list.length - 1] : null;
+    return this.list.length > 0 ? this.list[0] : null;
   }
   createEmptyNote(now: Date): CreateEmptyNoteEvent {
     var date = new Date(now);

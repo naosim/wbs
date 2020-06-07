@@ -117,224 +117,7 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   }
 
   return newRequire;
-})({"domain/TaskSummary.ts":[function(require,module,exports) {
-"use strict";
-
-var __spreadArrays = this && this.__spreadArrays || function () {
-  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
-    s += arguments[i].length;
-  }
-
-  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
-    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
-      r[k] = a[j];
-    }
-  }
-
-  return r;
-};
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.CreateTaskSummaryEvent = exports.Milestone = exports.DateInTask = void 0;
-
-var DateInTask =
-/** @class */
-function () {
-  function DateInTask(text, date) {
-    this.text = text;
-    this.date = date;
-  }
-
-  DateInTask.create = function (dateText, now) {
-    var parts = dateText.split('/').map(function (v) {
-      return parseInt(v);
-    });
-
-    if (parts.length == 2) {
-      // ex 6/23
-      parts = __spreadArrays([parts[0] <= 3 ? now.getFullYear() + 1 : now.getFullYear()], parts);
-    }
-
-    var date = new Date(parts.join('/'));
-    return new DateInTask(dateText, date);
-  };
-
-  return DateInTask;
-}();
-
-exports.DateInTask = DateInTask;
-
-var Milestone =
-/** @class */
-function () {
-  function Milestone(dateInTask, title) {
-    this.dateInTask = dateInTask;
-    this.title = title;
-  }
-
-  return Milestone;
-}();
-
-exports.Milestone = Milestone;
-
-var CreateTaskSummaryEvent =
-/** @class */
-function () {
-  function CreateTaskSummaryEvent(title) {
-    this.title = title;
-  }
-
-  return CreateTaskSummaryEvent;
-}();
-
-exports.CreateTaskSummaryEvent = CreateTaskSummaryEvent;
-},{}],"domain/task.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.ManagedTask = exports.NodeTask = void 0;
-
-var TaskSummary_1 = require("./TaskSummary"); // class Task implements TaskIf {
-//   isNode: boolean;
-//   isTitleOnly: boolean;
-//   isManaged: boolean;
-//   title: string;
-//   private constructor(
-//     public nest: string, 
-//     private _node: NodeTask, 
-//     private _titleOnly: TitleOnlyTask, 
-//     private _managed: ManagedTask
-//   ) {
-//     var task: TaskIf;
-//     if(_node) {
-//       task = _node;
-//     } else if(_titleOnly) {
-//       task = _titleOnly;
-//     } else if(_managed) {
-//       task = _managed;
-//     } else {
-//       throw '不明なタスク'
-//     }
-//     this.title = task.title;
-//     this.isNode = task.isNode;
-//     this.isTitleOnly = task.isTitleOnly;
-//     this.isManaged = task.isManaged;
-//   }
-//   addChild(task: Task) {
-//     if(this.isManaged) {
-//       throw 'mangedにchildは追加できません'
-//     }
-//     if(this.isTitleOnly) {
-//       this._node = new NodeTask(this.title, [task.value]);
-//       this.title = this._node.title;
-//       this.isNode = this._node.isNode;
-//       this.isTitleOnly = this._node.isTitleOnly;
-//       this.isManaged = this._node.isManaged;
-//       return 
-//     }
-//     if(this.isManaged) {
-//       this.node.addChildren(task.value);
-//     }
-//   }
-//   get node(): NodeTask {
-//     if(!this.isNode) throw 'nodeでない'
-//     return this._node;
-//   }
-//   get titleOnly(): TitleOnlyTask {
-//     if(!this.isTitleOnly) throw 'titleonlyでない'
-//     return this._titleOnly;
-//   }
-//   get managed(): ManagedTask {
-//     if(!this.isManaged) throw 'managedでない'
-//     return this._managed;
-//   }
-//   get value(): NodeTask | TitleOnlyTask | ManagedTask {
-//     return this._node || this._titleOnly || this._managed
-//   }
-//   static createNode(node: NodeTask, nest: string):Task {
-//     return new Task(nest, node, null, null)
-//   }
-//   static createTitleOnly(titleOnly: TitleOnlyTask, nest: string):Task {
-//     return new Task(nest, null, titleOnly, null)
-//   }
-//   static createManaged(managed: ManagedTask, nest: string):Task {
-//     return new Task(nest, null, null, managed)
-//   }
-// }
-
-
-var NodeTask =
-/** @class */
-function () {
-  function NodeTask(title, children, nest) {
-    this.title = title;
-    this.children = children;
-    this.nest = nest;
-    this.isManaged = false;
-    this.status = 'opened';
-
-    if (children.length > 0) {
-      this.isNode = true;
-      this.isTitleOnly = false;
-    } else {
-      this.isNode = false;
-      this.isTitleOnly = true;
-    }
-  }
-
-  NodeTask.prototype.addChildren = function (children) {
-    this.children.push(children);
-    this.isNode = true;
-    this.isTitleOnly = false;
-  };
-
-  NodeTask.prototype.toMangedTask = function () {
-    if (!this.isTitleOnly) {
-      throw 'title onlyでない';
-    }
-
-    return new TaskSummary_1.CreateTaskSummaryEvent(this.title);
-  };
-
-  return NodeTask;
-}();
-
-exports.NodeTask = NodeTask; // export class TitleOnlyTask implements TaskIf {
-//   isNode: boolean = false;
-//   isTitleOnly: boolean = true;
-//   isManaged: boolean = false;
-//   constructor(
-//     public title: string,
-//     public nest: string
-//   ) {}
-// }
-
-var ManagedTask =
-/** @class */
-function () {
-  function ManagedTask(taskId, title, summary, latestNote, nest) {
-    this.taskId = taskId;
-    this.title = title;
-    this.summary = summary;
-    this.latestNote = latestNote;
-    this.nest = nest;
-    this.isNode = false;
-    this.isTitleOnly = false;
-    this.isManaged = true;
-    this.isDone = summary.isDone;
-    this.isBeforeStartDate = summary.isBeforeStartDate;
-    this.latestNoteText = latestNote ? latestNote.date + "\n" + latestNote.body : '';
-  }
-
-  return ManagedTask;
-}();
-
-exports.ManagedTask = ManagedTask;
-},{"./TaskSummary":"domain/TaskSummary.ts"}],"infra/github/IssueRepositoryImpl.ts":[function(require,module,exports) {
+})({"infra/github/IssueRepositoryImpl.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -446,8 +229,6 @@ function () {
   };
 
   IssueRepositoryDummy.prototype.getIssue = function (issueNumber) {
-    console.log(issueNumber);
-
     if (!this.map[issueNumber]) {
       if (issueNumber == this.taskRootIssueNumber) {
         this.map[issueNumber] = {
@@ -690,7 +471,8 @@ function () {
     this.issueCommentsMap[issueNumber].push({
       id: id,
       body: body
-    });
+    }); // console.log(this.issueCommentsMap[issueNumber]);
+
     setTimeout(function () {
       return callback(null, _this.issueCommentsMap[issueNumber][_this.issueCommentsMap[issueNumber].length - 1]);
     }, 100);
@@ -700,6 +482,79 @@ function () {
 }();
 
 exports.CommentRepositoryDummy = CommentRepositoryDummy;
+},{}],"domain/TaskSummary.ts":[function(require,module,exports) {
+"use strict";
+
+var __spreadArrays = this && this.__spreadArrays || function () {
+  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
+    s += arguments[i].length;
+  }
+
+  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
+    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
+      r[k] = a[j];
+    }
+  }
+
+  return r;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.CreateTaskSummaryEvent = exports.Milestone = exports.DateInTask = void 0;
+
+var DateInTask =
+/** @class */
+function () {
+  function DateInTask(text, date) {
+    this.text = text;
+    this.date = date;
+  }
+
+  DateInTask.create = function (dateText, now) {
+    var parts = dateText.split('/').map(function (v) {
+      return parseInt(v);
+    });
+
+    if (parts.length == 2) {
+      // ex 6/23
+      parts = __spreadArrays([parts[0] <= 3 ? now.getFullYear() + 1 : now.getFullYear()], parts);
+    }
+
+    var date = new Date(parts.join('/'));
+    return new DateInTask(dateText, date);
+  };
+
+  return DateInTask;
+}();
+
+exports.DateInTask = DateInTask;
+
+var Milestone =
+/** @class */
+function () {
+  function Milestone(dateInTask, title) {
+    this.dateInTask = dateInTask;
+    this.title = title;
+  }
+
+  return Milestone;
+}();
+
+exports.Milestone = Milestone;
+
+var CreateTaskSummaryEvent =
+/** @class */
+function () {
+  function CreateTaskSummaryEvent(title) {
+    this.title = title;
+  }
+
+  return CreateTaskSummaryEvent;
+}();
+
+exports.CreateTaskSummaryEvent = CreateTaskSummaryEvent;
 },{}],"infra/tasksummary/TaskSummaryImpl.ts":[function(require,module,exports) {
 "use strict";
 
@@ -866,33 +721,112 @@ function () {
 }();
 
 exports.TaskSummaryRepositoryImpl = TaskSummaryRepositoryImpl;
-},{"../../domain/TaskSummary":"domain/TaskSummary.ts"}],"index.ts":[function(require,module,exports) {
+},{"../../domain/TaskSummary":"domain/TaskSummary.ts"}],"domain/TaskNote.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
-}); /// <reference path="./sugar.d.ts" />
+});
+exports.CreateEmptyNoteEvent = exports.UpdateNoteEvent = exports.Notes = exports.Note = void 0;
 
-var task_1 = require("./domain/task");
-
-var IssueRepositoryImpl_1 = require("./infra/github/IssueRepositoryImpl");
-
-var IssueRepositoryDummy_1 = require("./infra/github/IssueRepositoryDummy");
-
-var CommentRepositoryImpl_1 = require("./infra/github/CommentRepositoryImpl");
-
-var CommentRepositoryDummy_1 = require("./infra/github/CommentRepositoryDummy");
-
-var TaskSummaryImpl_1 = require("./infra/tasksummary/TaskSummaryImpl");
-
-var TaskNoteRepository =
+var Note =
 /** @class */
 function () {
-  function TaskNoteRepository(commentRepository) {
+  function Note(taskId, id, date, body) {
+    this.taskId = taskId;
+    this.id = id;
+    this.date = date;
+    this.body = body;
+  }
+
+  Note.prototype.updateBody = function (body) {
+    return new UpdateNoteEvent(this.taskId, this.id, this.date, body);
+  };
+
+  return Note;
+}();
+
+exports.Note = Note;
+
+var Notes =
+/** @class */
+function () {
+  function Notes(taskId, list) {
+    this.taskId = taskId;
+    this.list = list;
+  }
+
+  Object.defineProperty(Notes.prototype, "latestNote", {
+    get: function get() {
+      return this.list.length > 0 ? this.list[0] : null;
+    },
+    enumerable: false,
+    configurable: true
+  });
+
+  Notes.prototype.createEmptyNote = function (now) {
+    var date = new Date(now);
+    date.setDate(date.getDay() == 0 ? date.getDate() - 6 : date.getDate() - date.getDay() + 1); // 月曜日
+
+    date = new Date(date.toDateString());
+
+    if (this.latestNote && this.latestNote.date.getTime() == date.getTime()) {
+      throw '既に最新のノートがある';
+    }
+
+    return new CreateEmptyNoteEvent(this.taskId, date);
+  };
+
+  return Notes;
+}();
+
+exports.Notes = Notes;
+
+var UpdateNoteEvent =
+/** @class */
+function () {
+  function UpdateNoteEvent(taskId, id, date, body) {
+    this.taskId = taskId;
+    this.id = id;
+    this.date = date;
+    this.body = body;
+  }
+
+  return UpdateNoteEvent;
+}();
+
+exports.UpdateNoteEvent = UpdateNoteEvent;
+
+var CreateEmptyNoteEvent =
+/** @class */
+function () {
+  function CreateEmptyNoteEvent(taskId, date) {
+    this.taskId = taskId;
+    this.date = date;
+  }
+
+  return CreateEmptyNoteEvent;
+}();
+
+exports.CreateEmptyNoteEvent = CreateEmptyNoteEvent;
+},{}],"infra/tasknote/TaskNoteRepositoryImpl.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.TaskNoteRepositoryImpl = void 0;
+
+var TaskNote_1 = require("../../domain/TaskNote");
+
+var TaskNoteRepositoryImpl =
+/** @class */
+function () {
+  function TaskNoteRepositoryImpl(commentRepository) {
     this.commentRepository = commentRepository;
   }
 
-  TaskNoteRepository.convert = function (id, body) {
+  TaskNoteRepositoryImpl.convert = function (id, body) {
     if (body.indexOf('---') == -1) {
       return null;
     }
@@ -905,44 +839,322 @@ function () {
     };
   };
 
-  TaskNoteRepository.prototype.getNotes = function (issueNumber) {
-    if (issueNumber <= 0) {
+  TaskNoteRepositoryImpl.createCommentText = function (date, body) {
+    return date.toLocaleDateString() + "\n---\n" + body.trim();
+  };
+
+  TaskNoteRepositoryImpl.prototype.getNotes = function (taskId) {
+    if (taskId <= 0) {
       throw '不正な番号';
     } // 担当,関係者,完了,DONEの定義,マイルストーン,開始日,終了日,内容,リンク
 
 
-    var notes = this.commentRepository.getCommentsForIssue(issueNumber).map(function (v) {
-      return TaskNoteRepository.convert(v.id, v.body);
+    var notes = this.commentRepository.getCommentsForIssue(taskId).map(function (v) {
+      return TaskNoteRepositoryImpl.convert(v.id, v.body);
     }).filter(function (v) {
       return v;
+    }).map(function (v) {
+      return new TaskNote_1.Note(taskId, v.id, new Date(v.date), v.body);
     }).sort(function (a, b) {
-      if (a.date == b.date) return 0;
-      if (a.date > b.date) return -1;
-      if (a.date < b.date) return 1;
+      a = a.date.getTime();
+      b = b.date.getTime();
+      if (a == b) return 0;
+      if (a > b) return -1;
+      if (a < b) return 1;
     }); // exclude null
     // return [{date: '2020/1/1', body: 'hoge'}];
 
-    console.log(issueNumber);
-    console.log(notes);
-    return notes;
+    return new TaskNote_1.Notes(taskId, notes);
   };
 
-  TaskNoteRepository.prototype.update = function (issueNumber, id, date, body, cb) {
-    var comment = ("\n" + date + "\n---\n" + body + "\n        ").trim();
-    this.commentRepository.update(issueNumber, id, comment, function (err, obj) {
+  TaskNoteRepositoryImpl.prototype.update = function (event, cb) {
+    this.commentRepository.update(event.taskId, event.id, TaskNoteRepositoryImpl.createCommentText(event.date, event.body), function (err, obj) {
       cb(err);
     });
   };
 
-  TaskNoteRepository.prototype.createEmpyNote = function (issueNumber, date, cb) {
-    var comment = ("\n" + date + "\n---\n        ").trim();
-    this.commentRepository.create(issueNumber, comment, function (err, obj) {
+  TaskNoteRepositoryImpl.prototype.createEmptyNote = function (event, cb) {
+    this.commentRepository.create(event.taskId, TaskNoteRepositoryImpl.createCommentText(event.date, ''), function (err, obj) {
       cb(err);
     });
   };
 
-  return TaskNoteRepository;
+  return TaskNoteRepositoryImpl;
 }();
+
+exports.TaskNoteRepositoryImpl = TaskNoteRepositoryImpl;
+},{"../../domain/TaskNote":"domain/TaskNote.ts"}],"domain/taskroot/TaskTree.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.TaskTreeRepository = exports.TaskTitleAndId = exports.TreeNode = void 0;
+
+var TreeNode =
+/** @class */
+function () {
+  function TreeNode(value, children) {
+    if (children === void 0) {
+      children = [];
+    }
+
+    this.value = value;
+    this.children = children;
+  }
+
+  Object.defineProperty(TreeNode.prototype, "hasChildren", {
+    get: function get() {
+      return this.children.length > 0;
+    },
+    enumerable: false,
+    configurable: true
+  });
+  Object.defineProperty(TreeNode.prototype, "lastChild", {
+    get: function get() {
+      if (!this.hasChildren) throw 'no children';
+      return this.children[this.children.length - 1];
+    },
+    enumerable: false,
+    configurable: true
+  });
+
+  TreeNode.prototype.addChild = function (node) {
+    this.children.push(node);
+  };
+
+  return TreeNode;
+}();
+
+exports.TreeNode = TreeNode;
+
+var TaskTitleAndId =
+/** @class */
+function () {
+  function TaskTitleAndId(title, taskId) {
+    this.title = title;
+    this.taskId = taskId;
+  }
+
+  return TaskTitleAndId;
+}();
+
+exports.TaskTitleAndId = TaskTitleAndId;
+
+function convertToTree(text) {
+  var root = new TreeNode(new TaskTitleAndId('_root'));
+  var lastNodes = [root];
+  text.trim().split('\n').forEach(function (line) {
+    var nest = line.split('-')[0].length / 2 + 1; //1 origin
+
+    var node = new TreeNode(textToTaskTitleAndId(line.trim().slice(2)));
+    lastNodes[nest] = node;
+    lastNodes[nest - 1].addChild(node);
+  });
+  return root;
+}
+
+function textToTaskTitleAndId(text) {
+  if (text.indexOf('[') != 0) {
+    return new TaskTitleAndId(text);
+  }
+
+  var ary = text.split('/');
+  var taskId = parseInt(ary[ary.length - 1].split(')')[0]);
+  var title = text.split(']')[0].slice(1);
+  return new TaskTitleAndId(title, taskId);
+}
+
+var TaskTreeRepository =
+/** @class */
+function () {
+  function TaskTreeRepository(taskRootIssueNumber, issueRepository) {
+    this.taskRootIssueNumber = taskRootIssueNumber;
+    this.issueRepository = issueRepository;
+  }
+
+  TaskTreeRepository.prototype.getTaskTree = function () {
+    var taskRootText = this.issueRepository.getIssue(this.taskRootIssueNumber).body;
+    return convertToTree(taskRootText);
+  };
+
+  TaskTreeRepository.prototype.getTaskRootBody = function () {
+    return this.issueRepository.getIssue(this.taskRootIssueNumber).body;
+  };
+
+  TaskTreeRepository.prototype.updateTaskRootBody = function (taskRootBody, cb) {
+    this.issueRepository.updateBody(this.taskRootIssueNumber, taskRootBody, cb);
+  };
+
+  TaskTreeRepository.prototype.updateTaskTitleAndId = function (taskTitleAndId, cb) {
+    var rootBody = this.getTaskRootBody().split(taskTitleAndId.title).join("[" + taskTitleAndId.title + "](./" + taskTitleAndId.taskId + ")");
+    this.updateTaskRootBody(rootBody, cb);
+  };
+
+  return TaskTreeRepository;
+}();
+
+exports.TaskTreeRepository = TaskTreeRepository;
+},{}],"domain/task.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.ManagedTask = exports.TitleOnlyTask = exports.NodeTask = void 0;
+
+var TaskSummary_1 = require("./TaskSummary");
+
+var NodeTask =
+/** @class */
+function () {
+  function NodeTask(title, children, nest) {
+    this.title = title;
+    this.children = children;
+    this.nest = nest;
+    this.isNode = true;
+    this.isTitleOnly = false;
+    this.isManaged = false;
+    this.status = 'opened';
+  }
+
+  return NodeTask;
+}();
+
+exports.NodeTask = NodeTask;
+
+var TitleOnlyTask =
+/** @class */
+function () {
+  function TitleOnlyTask(title, nest) {
+    this.title = title;
+    this.nest = nest;
+    this.isNode = false;
+    this.isTitleOnly = true;
+    this.isManaged = false;
+  }
+
+  TitleOnlyTask.prototype.toMangedTask = function () {
+    return new TaskSummary_1.CreateTaskSummaryEvent(this.title);
+  };
+
+  return TitleOnlyTask;
+}();
+
+exports.TitleOnlyTask = TitleOnlyTask;
+
+var ManagedTask =
+/** @class */
+function () {
+  function ManagedTask(taskId, title, summary, latestNote, nest) {
+    this.taskId = taskId;
+    this.title = title;
+    this.summary = summary;
+    this.latestNote = latestNote;
+    this.nest = nest;
+    this.isNode = false;
+    this.isTitleOnly = false;
+    this.isManaged = true;
+    this.isDone = summary.isDone;
+    this.isBeforeStartDate = summary.isBeforeStartDate;
+    this.latestNoteText = latestNote ? latestNote.date + "\n" + latestNote.body : '';
+  }
+
+  return ManagedTask;
+}();
+
+exports.ManagedTask = ManagedTask;
+},{"./TaskSummary":"domain/TaskSummary.ts"}],"TaskListFactory.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.TaskListFactory = void 0;
+
+var task_1 = require("./domain/task");
+
+var TaskListFactory =
+/** @class */
+function () {
+  function TaskListFactory(taskSummaryRepository, taskNoteRepository, taskTreeRepository, now) {
+    this.taskSummaryRepository = taskSummaryRepository;
+    this.taskNoteRepository = taskNoteRepository;
+    this.taskTreeRepository = taskTreeRepository;
+    this.now = now;
+  }
+
+  TaskListFactory.prototype.create = function () {
+    var tree = this.taskTreeRepository.getTaskTree();
+    return this.flat(this.treeNodeToTask(tree, -1)).slice(1);
+  };
+
+  TaskListFactory.prototype.treeNodeToTask = function (node, nestNum) {
+    var _this = this;
+
+    if (nestNum === void 0) {
+      nestNum = 0;
+    }
+
+    var title = node.value.title;
+    var nest = "nest" + nestNum;
+
+    if (node.value.taskId) {
+      // managed
+      return new task_1.ManagedTask(node.value.taskId, title, this.taskSummaryRepository.getSummary(node.value.taskId, this.now), this.taskNoteRepository.getNotes(node.value.taskId).latestNote, nest);
+    } else if (node.hasChildren) {
+      return new task_1.NodeTask(title, node.children.map(function (v) {
+        return _this.treeNodeToTask(v, nestNum + 1);
+      }), nest);
+    } else {
+      return new task_1.TitleOnlyTask(title, nest);
+    }
+  };
+
+  TaskListFactory.prototype.flat = function (task, list) {
+    var _this = this;
+
+    if (list === void 0) {
+      list = [];
+    }
+
+    list.push(task);
+
+    if (task.isNode) {
+      task.children.forEach(function (v) {
+        return _this.flat(v, list);
+      });
+    }
+
+    return list;
+  };
+
+  return TaskListFactory;
+}();
+
+exports.TaskListFactory = TaskListFactory;
+},{"./domain/task":"domain/task.ts"}],"index.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var IssueRepositoryImpl_1 = require("./infra/github/IssueRepositoryImpl");
+
+var IssueRepositoryDummy_1 = require("./infra/github/IssueRepositoryDummy");
+
+var CommentRepositoryImpl_1 = require("./infra/github/CommentRepositoryImpl");
+
+var CommentRepositoryDummy_1 = require("./infra/github/CommentRepositoryDummy");
+
+var TaskSummaryImpl_1 = require("./infra/tasksummary/TaskSummaryImpl");
+
+var TaskNoteRepositoryImpl_1 = require("./infra/tasknote/TaskNoteRepositoryImpl");
+
+var TaskTree_1 = require("./domain/taskroot/TaskTree");
+
+var TaskListFactory_1 = require("./TaskListFactory");
 
 (function () {
   var issueRepository;
@@ -956,164 +1168,40 @@ function () {
   }
 
   var taskSummaryRepository = new TaskSummaryImpl_1.TaskSummaryRepositoryImpl(issueRepository);
-  var taskNoteRepository = new TaskNoteRepository(commentRepository);
+  var taskNoteRepository = new TaskNoteRepositoryImpl_1.TaskNoteRepositoryImpl(commentRepository);
+  var taskTreeRepository = new TaskTree_1.TaskTreeRepository(config.taskRootIssueNumber, issueRepository);
   issueRepository.refresh(function (err) {
     if (err) {
       alert(err);
       throw err;
     }
 
-    var rootIssue = issueRepository.getIssue(config.taskRootIssueNumber);
     commentRepository.refreshNewestUpdateComments(new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), function (err, obj) {
       if (err) {
         alert(err);
         throw err;
       }
 
-      console.log(obj);
-      setup(config.taskRootIssueNumber, rootIssue.body, taskSummaryRepository, taskNoteRepository, issueRepository, new Date());
+      setup(taskSummaryRepository, taskNoteRepository, taskTreeRepository, new Date());
     });
   });
 })();
 
-function getExpandList(list) {
-  var result = [];
-  list.forEach(function (v) {
-    result.push(v);
+function setup(taskSummaryRepository, taskNoteRepository, taskTreeRepository, now) {
+  var taskListFactory = new TaskListFactory_1.TaskListFactory(taskSummaryRepository, taskNoteRepository, taskTreeRepository, now);
+  var tasks = taskListFactory.create();
 
-    if (v.isNode) {
-      getExpandList(v.children).forEach(function (p) {
-        return result.push(p);
-      });
-    }
-  });
-  return result;
-}
+  var callbackToReload = function callbackToReload(err) {
+    if (err) throw err;
+    app.reload();
+  };
 
-function findParent(obj, nest) {
-  if (nest == 0) {
-    return obj;
-  }
-
-  var lastTask = obj.children[obj.children.length - 1];
-  if (!lastTask.isNode) throw 'データ不正';
-  return findParent(lastTask, nest - 1);
-} // function parse(text, taskSummaryRepository: TaskSummaryRepository, taskNoteRepository: TaskNoteRepository, now: Date) {
-//   var rootObj = {title: '_root', children: [], status: 'opened', isTask: false, summary:null, notes: null, latestNote: null, latestNoteText: ''};
-//   var lastObj = rootObj;
-//   var parentObj = rootObj;
-//   var lastNest = 0;
-//   text.trim().split('\n').forEach(line => {
-//     var nest = line.split('-')[0].length / 2
-//     var title = line.slice(nest * 2 + 2).trim();
-//     var issueNumber = -1;
-//     if(title.indexOf('[') == 0) {
-//       let ary = title.split('/');
-//       issueNumber = parseInt(ary[ary.length - 1].split(')')[0]);
-//       title = title.split(']')[0].slice(1);
-//     }
-//     var obj: TaskViewModel = {title: title, nest: `nest${nest}`, children: [], status: 'opened', issueNumber: issueNumber, isTask: true, isIssuedTask: false, summary:null, notes: null, latestNote: null, latestNoteText: '', isDone: false, isBeforeStartDate: false};
-//     if(obj.issueNumber > 0) {
-//       obj.isIssuedTask = true;
-//       obj.summary = taskSummaryRepository.getSummary(obj.issueNumber, now);
-//       obj.notes = taskNoteRepository.getNotes(obj.issueNumber)
-//       obj.latestNote = obj.notes[0];
-//       obj.latestNoteText = obj.notes.length > 0 ? `${obj.notes[0].date}\n${obj.notes[0].body}`.split('\n').join('<br>') : '';
-//       obj.isDone = obj.summary.isDone
-//       obj.isBeforeStartDate = obj.summary.isBeforeStartDate
-//     }
-//     // console.log(nest, line);
-//     if(lastNest == nest) {
-//     }
-//     if(lastNest < nest) {
-//       parentObj = lastObj;
-//     }
-//     if(lastNest > nest) {
-//       parentObj = findParent(root, nest)
-//     }
-//     // console.log(parentObj);
-//     parentObj.isTask = false;
-//     parentObj.children.push(obj)
-//     lastObj = obj;
-//     lastNest = nest;
-//   });
-//   // console.log(rootObj.children);
-//   return rootObj.children;
-// }
-
-
-function parse2(text, taskSummaryRepository, taskNoteRepository, now) {
-  var rootNodeTask = new task_1.NodeTask('_root', [], ''); //{title: '_root', children: [], status: 'opened', isTask: false, summary:null, notes: null, latestNote: null, latestNoteText: ''};
-
-  var lastTask = rootNodeTask;
-  var parentTask = rootNodeTask;
-  var lastNest = 0;
-  text.trim().split('\n').forEach(function (line) {
-    var nest = line.split('-')[0].length / 2;
-    var title = line.slice(nest * 2 + 2).trim();
-    var issueNumber = -1;
-
-    if (title.indexOf('[') == 0) {
-      var ary = title.split('/');
-      issueNumber = parseInt(ary[ary.length - 1].split(')')[0]);
-      title = title.split(']')[0].slice(1);
-    }
-
-    var obj = {
-      title: title,
-      nest: "nest" + nest,
-      children: [],
-      status: 'opened',
-      issueNumber: issueNumber,
-      isTask: true,
-      isIssuedTask: false,
-      summary: null,
-      notes: null,
-      latestNote: null,
-      latestNoteText: '',
-      isDone: false,
-      isBeforeStartDate: false
-    };
-    var task;
-
-    if (obj.issueNumber > 0) {
-      // managedTask
-      task = new task_1.ManagedTask(obj.issueNumber, obj.title, taskSummaryRepository.getSummary(obj.issueNumber, now), taskNoteRepository.getNotes(obj.issueNumber)[0], obj.nest);
-    } else {
-      task = new task_1.NodeTask(obj.title, [], obj.nest);
-    } // console.log(nest, line);
-
-
-    if (lastNest == nest) {}
-
-    if (lastNest < nest) {
-      if (lastTask.isManaged) throw 'データ不正';
-      parentTask = lastTask;
-    }
-
-    if (lastNest > nest) {
-      parentTask = findParent(rootNodeTask, nest);
-    } // console.log(parentObj);
-
-
-    parentTask.addChildren(task);
-    lastTask = task;
-    lastNest = nest;
-  }); // console.log(rootObj.children);
-
-  return rootNodeTask.children;
-}
-
-function setup(taskRootIssueNumber, rootBody, taskSummaryRepository, taskNoteRepository, issueRepository, now) {
-  console.log('rootBody', rootBody);
-  var tasks = parse2(rootBody, taskSummaryRepository, taskNoteRepository, now);
-  console.log(tasks);
   var app = new Vue({
     el: '#app',
     data: {
       message: 'Hello Vue!',
       list: tasks,
-      rootBody: rootBody,
+      rootBody: taskTreeRepository.getTaskRootBody(),
       filter: '',
       owner: config.owner,
       repo: config.repo,
@@ -1123,7 +1211,7 @@ function setup(taskRootIssueNumber, rootBody, taskSummaryRepository, taskNoteRep
       expandList: function expandList() {
         var _this = this;
 
-        var result = getExpandList(this.list);
+        var result = this.list;
         result = result.map(function (v) {
           if (_this.filter.trim().length == 0) {
             v.isHilight = false;
@@ -1144,75 +1232,39 @@ function setup(taskRootIssueNumber, rootBody, taskSummaryRepository, taskNoteRep
     },
     methods: {
       reload: function reload() {
-        this.list = parse2(this.rootBody, taskSummaryRepository, taskNoteRepository, now);
+        this.list = taskListFactory.create();
+        this.rootBody = taskTreeRepository.getTaskRootBody();
       },
       onPressedRootBodyEdit: function onPressedRootBodyEdit() {
-        var _this = this;
-
-        issueRepository.updateBody(taskRootIssueNumber, this.rootBody, function (err, obj) {
-          return _this.reload();
-        });
+        taskTreeRepository.updateTaskRootBody(this.rootBody, callbackToReload);
       },
       br: function br(text) {
         return text.split('\n').join('<br>');
       },
-      editComment: function editComment(issueNumber, id, date, selector) {
-        var _this = this;
-
-        var body = document.querySelector(selector).value;
-        console.log(issueNumber, id, document.querySelector(selector).value);
-        taskNoteRepository.update(issueNumber, id, date, body, function (err) {
-          if (err) {
-            alert(err);
-            throw err;
-          }
-
-          _this.reload();
-        });
-      },
-      createTask: function createTask(nodeTask) {
-        var _this = this;
-
-        var event = nodeTask.toMangedTask();
+      createTask: function createTask(titleOnlyTask) {
+        var event = titleOnlyTask.toMangedTask();
         taskSummaryRepository.create(event, function (err, issueNumber) {
           if (err) {
             alert(err);
             throw err;
           }
 
-          console.log(nodeTask);
-          _this.rootBody = _this.rootBody.split(event.title).join("[" + event.title + "](" + _this.issueUrlPrefix + "/" + issueNumber + ")");
-
-          _this.onPressedRootBodyEdit();
+          taskTreeRepository.updateTaskTitleAndId(new TaskTree_1.TaskTitleAndId(event.title, issueNumber), callbackToReload);
         });
       },
-      createNote: function createNote(issueNumber) {
-        var _this = this;
-
-        var date = new Date();
-        date.setDate(date.getDate() - date.getDay() + 1); // 月曜日
-
-        var d = date.getFullYear() + "/" + zerofil(date.getMonth() + 1) + "/" + zerofil(date.getDate());
-        console.log(d);
-        taskNoteRepository.createEmpyNote(issueNumber, d, function (err) {
-          if (err) {
-            alert(err);
-            throw err;
-          }
-
-          _this.reload();
-        });
+      editNote: function editNote(note, selector) {
+        var body = document.querySelector(selector).value;
+        var event = note.updateBody(body);
+        taskNoteRepository.update(event, callbackToReload);
+      },
+      createNote: function createNote(taskId) {
+        var event = taskNoteRepository.getNotes(taskId).createEmptyNote(now);
+        taskNoteRepository.createEmptyNote(event, callbackToReload);
       }
     }
   });
 }
-
-function zerofil(num) {
-  return ("0" + num).slice(-2);
-}
-
-console.log(new Sugar.Date('2 weeks ago').getMonth());
-},{"./domain/task":"domain/task.ts","./infra/github/IssueRepositoryImpl":"infra/github/IssueRepositoryImpl.ts","./infra/github/IssueRepositoryDummy":"infra/github/IssueRepositoryDummy.ts","./infra/github/CommentRepositoryImpl":"infra/github/CommentRepositoryImpl.ts","./infra/github/CommentRepositoryDummy":"infra/github/CommentRepositoryDummy.ts","./infra/tasksummary/TaskSummaryImpl":"infra/tasksummary/TaskSummaryImpl.ts"}],"../../../../../../usr/local/lib/node_modules/parcel/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./infra/github/IssueRepositoryImpl":"infra/github/IssueRepositoryImpl.ts","./infra/github/IssueRepositoryDummy":"infra/github/IssueRepositoryDummy.ts","./infra/github/CommentRepositoryImpl":"infra/github/CommentRepositoryImpl.ts","./infra/github/CommentRepositoryDummy":"infra/github/CommentRepositoryDummy.ts","./infra/tasksummary/TaskSummaryImpl":"infra/tasksummary/TaskSummaryImpl.ts","./infra/tasknote/TaskNoteRepositoryImpl":"infra/tasknote/TaskNoteRepositoryImpl.ts","./domain/taskroot/TaskTree":"domain/taskroot/TaskTree.ts","./TaskListFactory":"TaskListFactory.ts"}],"../../../../../../usr/local/lib/node_modules/parcel/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
