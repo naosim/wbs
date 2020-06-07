@@ -103,22 +103,34 @@ function setup(
       filter: '',
       owner: config.owner,
       repo: config.repo,
-      issueUrlPrefix: `https://github.com/${config.owner}/${config.repo}/issues`
+      issueUrlPrefix: `https://github.com/${config.owner}/${config.repo}/issues`,
+      filterCheckbox: {
+        'title': {label: '件名', checked: true},
+        'assgin': {label: '担当', checked: true},
+        'body': {label: '内容', checked: true},
+        'milestone': {label: 'マイルストーン', checked: true},
+        'latestnote': {label: '最新状況', checked: true}
+      }
     },
     computed: {
-      expandList: function() {
+      decoratedList: function() {
         var result = this.list;
+        var filterTargetsForSummary = ['担当', '内容', 'マイルストーン'];
+
+        var fitlerTargetMap = {
+          'title': v => v.title.indexOf(this.filter) != -1,
+          'assgin': v => v.isManaged && v.summary['担当'].indexOf(this.filter) != -1,
+          'body': v => v.isManaged && v.summary['内容'].indexOf(this.filter) != -1,
+          'milestone': v => v.isManaged && v.summary['マイルストーン'].indexOf(this.filter) != -1,
+          'latestnote': v => v.isManaged && v.latestNoteText.indexOf(this.filter) != -1
+        };
+        
         result = result.map(v => {
+          v.isHilight = false;
           if(this.filter.trim().length == 0) {
             v.isHilight = false;
-          }else if(v.title.indexOf(this.filter) != -1) {
+          }else if(Object.keys(fitlerTargetMap).filter(key => this.filterCheckbox[key].checked).some(key => fitlerTargetMap[key](v))) {
             v.isHilight = true;
-          }else if(v.summary) {
-            if(v.summary['担当'].indexOf(this.filter) != -1) {
-              v.isHilight = true;
-            }
-          }else {
-            v.isHilight = false;
           }
 
           return v;

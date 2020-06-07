@@ -1309,24 +1309,64 @@ function setup(taskSummaryRepository, taskNoteRepository, taskTreeRepository, no
       filter: '',
       owner: config.owner,
       repo: config.repo,
-      issueUrlPrefix: "https://github.com/" + config.owner + "/" + config.repo + "/issues"
+      issueUrlPrefix: "https://github.com/" + config.owner + "/" + config.repo + "/issues",
+      filterCheckbox: {
+        'title': {
+          label: '件名',
+          checked: true
+        },
+        'assgin': {
+          label: '担当',
+          checked: true
+        },
+        'body': {
+          label: '内容',
+          checked: true
+        },
+        'milestone': {
+          label: 'マイルストーン',
+          checked: true
+        },
+        'latestnote': {
+          label: '最新状況',
+          checked: true
+        }
+      }
     },
     computed: {
-      expandList: function expandList() {
+      decoratedList: function decoratedList() {
         var _this = this;
 
         var result = this.list;
+        var filterTargetsForSummary = ['担当', '内容', 'マイルストーン'];
+        var fitlerTargetMap = {
+          'title': function title(v) {
+            return v.title.indexOf(_this.filter) != -1;
+          },
+          'assgin': function assgin(v) {
+            return v.isManaged && v.summary['担当'].indexOf(_this.filter) != -1;
+          },
+          'body': function body(v) {
+            return v.isManaged && v.summary['内容'].indexOf(_this.filter) != -1;
+          },
+          'milestone': function milestone(v) {
+            return v.isManaged && v.summary['マイルストーン'].indexOf(_this.filter) != -1;
+          },
+          'latestnote': function latestnote(v) {
+            return v.isManaged && v.latestNoteText.indexOf(_this.filter) != -1;
+          }
+        };
         result = result.map(function (v) {
+          v.isHilight = false;
+
           if (_this.filter.trim().length == 0) {
             v.isHilight = false;
-          } else if (v.title.indexOf(_this.filter) != -1) {
+          } else if (Object.keys(fitlerTargetMap).filter(function (key) {
+            return _this.filterCheckbox[key].checked;
+          }).some(function (key) {
+            return fitlerTargetMap[key](v);
+          })) {
             v.isHilight = true;
-          } else if (v.summary) {
-            if (v.summary['担当'].indexOf(_this.filter) != -1) {
-              v.isHilight = true;
-            }
-          } else {
-            v.isHilight = false;
           }
 
           return v;

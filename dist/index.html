@@ -94,7 +94,10 @@ th:first-child, td:first-child {
 </style>
 <div id="app">
   <h1>WBS</h1>
+
   フィルタ: <input type="text" v-model="filter"></input>
+  <label  v-for="key in Object.keys(filterCheckbox)" v-bind:for="'checkbox_' + key"><input type="checkbox" v-bind:id="'checkbox_' + key" v-bind:value="key" v-model="filterCheckbox[key].checked">{{filterCheckbox[key].label}}</input></label>
+
   <table class="table">
     <thead>
       <th>件名</th>
@@ -114,7 +117,7 @@ th:first-child, td:first-child {
       <th>リンク</th>
       
     </thead>
-    <tr v-for="value in expandList" v-bind:class="[value.isIssuedTask && value.isDone ? 'done' : '', value.isHilight ? 'hilight' : '']">
+    <tr v-for="value in decoratedList" v-bind:class="[value.isIssuedTask && value.isDone ? 'done' : '', value.isHilight ? 'hilight' : '']">
       <template v-if="value.isNode">
         <td class="notTask">
           <div v-bind:class="['whitespace', value.nest]"></div>
