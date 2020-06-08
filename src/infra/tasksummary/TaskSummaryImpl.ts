@@ -51,8 +51,6 @@ export class TaskSummaryRepositoryImpl implements TaskSummaryRepository {
 
     obj.isDone = obj['完了'] && obj['完了'].trim().length > 0;
 
-    obj.isBeforeStartDate = obj['開始日'] && new Date(obj['開始日']) && new Date(obj['開始日']).getTime() > now.getTime()
-
     obj.milestones = MilestoneFactory.createMilestones(obj['マイルストーン'], now)
 
     /*
@@ -76,6 +74,11 @@ export class TaskSummaryRepositoryImpl implements TaskSummaryRepository {
     // issue番号
     obj.issueNumber = issue.number || taskId;
     obj.taskId = issue.number || taskId;
+
+    obj.isBeforeStartDate = obj.startDate && obj.startDate.date.getTime() >= now.getTime()
+    obj.isAfterEndDate = obj.endDate && obj.endDate.date.getTime() < now.getTime()
+    obj.isInStartEnd = !obj.isBeforeStartDate && !obj.isAfterEndDate;
+
     return new TaskSummary(obj as TaskSummaryIF);
   }
 

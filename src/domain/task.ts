@@ -44,6 +44,7 @@ export class ManagedTask implements TaskIf {
 
   readonly isDone: boolean;
   readonly isBeforeStartDate: boolean;
+  readonly isAfterEndDate: boolean;
   readonly latestNoteText: string;
   constructor(
     readonly taskId: TaskId,
@@ -54,6 +55,7 @@ export class ManagedTask implements TaskIf {
   ) {
     this.isDone = summary.isDone;
     this.isBeforeStartDate = summary.isBeforeStartDate;
+    this.isAfterEndDate = summary.isAfterEndDate;
     this.latestNoteText = latestNote ? `${latestNote.date}\n${latestNote.body}` : ''
   }
 }

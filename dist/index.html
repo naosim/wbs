@@ -118,7 +118,8 @@ td:first-child {
       <th style="width: 200px">DONEの定義</th>
       <th style="width: 200px">マイルストーン</th>
 
-      <th style="width: 100px">期間</th>
+      <th style="width: 100px">開始日</th>
+      <th style="width: 100px">終了日</th>
 
       <!--
       <th class="date">4</th><th class="date">5</th><th class="date">6</th><th class="date">7</th><th class="date">8</th><th class="date">9</th><th class="date">10</th><th class="date">11</th><th class="date">12</th><th class="date">1</th><th class="date">2</th><th class="date">3</th>
@@ -139,6 +140,7 @@ td:first-child {
           <div v-bind:class="['whitespace', value.nest]"></div>
           <span class="disk">・</span>{{ value.title }}
         </td>
+        <td></td>
         <td></td>
         <td></td>
         <td></td>
@@ -191,7 +193,8 @@ td:first-child {
           <td v-if="!value.editingText.isEditingMilestones" style="cursor: pointer" v-on:click="value.editingText.isEditingMilestones=true"><p v-for="milestone in value.summary.milestones.list" v-bind:class="milestone.isWithinOneWeek ? 'caution' : ''">{{milestone.dateInTask.text}} {{milestone.title}}</p></td>
           <td v-if="value.editingText.isEditingMilestones"><textarea v-model="value.editingText.milestones"></textarea><button v-on:click="updateSummary(value)">保存</button><button v-on:click="reload()">キャンセル</button></td>
 
-          <td v-bind:class="value.isManaged && value.isBeforeStartDate ? 'before-start-date' : ''"><span>{{ value.summary.startDate ? value.summary.startDate.text : '' }}<br>〜{{value.summary.endDate ? value.summary.endDate.text : ''}}</span></td>
+          <td v-bind:class="value.isManaged && value.isBeforeStartDate ? 'before-start-date' : ''"><span>{{ value.summary.startDate ? value.summary.startDate.text : '' }}</span></td>
+          <td v-bind:class="value.isManaged && !value.isDone && value.isAfterEndDate ? 'caution' : ''"><span>{{value.summary.endDate ? value.summary.endDate.text : ''}}</span></td>
           <!--
           <td></td>
           <td></td>
@@ -213,6 +216,7 @@ td:first-child {
           <td><span><p v-for="link in value.summary.links"><a v-bind:href="link.path" target="_blank">{{link.title}}</a></p></span></td>
         </template>
         <template v-else>
+          <td></td>
           <td></td>
           <td></td>
           <td></td>

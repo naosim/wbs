@@ -512,6 +512,8 @@ function () {
     this.issueNumber = org.issueNumber;
     this.isDone = org.isDone;
     this.isBeforeStartDate = org.isBeforeStartDate;
+    this.isAfterEndDate = org.isAfterEndDate;
+    this.isInStartEnd = org.isInStartEnd;
     this.milestones = org.milestones;
     this.assign = org.assign;
     this.related = org.related;
@@ -615,7 +617,7 @@ var DateInTask =
 function () {
   function DateInTask(text, date) {
     this.text = text;
-    this.date = date;
+    this.date = new Date(date.toLocaleDateString());
   }
 
   DateInTask.prototype.isWithin = function (pastDate) {
@@ -810,7 +812,6 @@ function () {
     });
     obj.links = obj['リンク'];
     obj.isDone = obj['完了'] && obj['完了'].trim().length > 0;
-    obj.isBeforeStartDate = obj['開始日'] && new Date(obj['開始日']) && new Date(obj['開始日']).getTime() > now.getTime();
     obj.milestones = MilestoneFactory_1.MilestoneFactory.createMilestones(obj['マイルストーン'], now);
     /*
     milestones: Milestones,
@@ -833,6 +834,9 @@ function () {
 
     obj.issueNumber = issue.number || taskId;
     obj.taskId = issue.number || taskId;
+    obj.isBeforeStartDate = obj.startDate && obj.startDate.date.getTime() >= now.getTime();
+    obj.isAfterEndDate = obj.endDate && obj.endDate.date.getTime() < now.getTime();
+    obj.isInStartEnd = !obj.isBeforeStartDate && !obj.isAfterEndDate;
     return new TaskSummary_1.TaskSummary(obj);
   };
 
@@ -1237,6 +1241,7 @@ function () {
     this.isManaged = true;
     this.isDone = summary.isDone;
     this.isBeforeStartDate = summary.isBeforeStartDate;
+    this.isAfterEndDate = summary.isAfterEndDate;
     this.latestNoteText = latestNote ? latestNote.date + "\n" + latestNote.body : '';
   }
 

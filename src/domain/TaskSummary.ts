@@ -5,6 +5,8 @@ export interface TaskSummaryIF {
   issueNumber: number;
   isDone: boolean;
   isBeforeStartDate: boolean;
+  isAfterEndDate: boolean;
+  isInStartEnd: boolean;
   milestones: Milestones;
   assign: string;
   related: string;
@@ -21,6 +23,8 @@ export class TaskSummary implements TaskSummaryIF {
   issueNumber: number;
   isDone: boolean;
   isBeforeStartDate: boolean;
+  isAfterEndDate: boolean;
+  isInStartEnd: boolean;
   milestones: Milestones;
   assign: string;
   related: string;
@@ -35,6 +39,8 @@ export class TaskSummary implements TaskSummaryIF {
     this.issueNumber = org.issueNumber;
     this.isDone = org.isDone;
     this.isBeforeStartDate = org.isBeforeStartDate;
+    this.isAfterEndDate = org.isAfterEndDate;
+    this.isInStartEnd = org.isInStartEnd;
     this.milestones = org.milestones;
     this.assign = org.assign;
     this.related = org.related;
@@ -106,7 +112,10 @@ export class Milestones {
 }
 
 export class DateInTask {
-  constructor(public text: string, public date: Date) {}
+  readonly date: Date;
+  constructor(public text: string, date: Date) {
+    this.date = new Date(date.toLocaleDateString());
+  }
   isWithin(pastDate: Date): boolean {
     return this.date.getTime() <= pastDate.getTime();
   }
