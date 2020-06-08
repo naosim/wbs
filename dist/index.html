@@ -29,7 +29,7 @@ thead th {
   /* 縦スクロール時に固定する */
   position: -webkit-sticky;
   position: sticky;
-  top: 0;
+  top: 0px;
   /* tbody内のセルより手前に表示する */
   z-index: 1;
 }
@@ -42,6 +42,9 @@ th:first-child, td:first-child {
   width: 300px;
   background-color: #eef;
   z-index: 2;
+}
+td:first-child {
+  z-index: 1;
 }
 
 .date {
@@ -108,6 +111,7 @@ th:first-child, td:first-child {
 
   <table class="table">
     <thead>
+      <tr>
       <th>件名</th>
       <th style="width: 100px">担当</th>
       <th style="width: 300px">最新状況</th>
@@ -126,8 +130,9 @@ th:first-child, td:first-child {
       
       <th>内容</th>
       <th>リンク</th>
-      
+    </tr>
     </thead>
+
     <tr v-for="value in decoratedList" v-bind:class="[value.isManaged && value.isDone ? 'done' : '', value.isHilight ? 'hilight' : '']">
       <template v-if="value.isNode">
         <td class="notTask">
@@ -167,7 +172,7 @@ th:first-child, td:first-child {
           <span v-if="value.isTitleOnly">{{ value.title }}</span> <button v-if="value.isTitleOnly" v-on:click="createTask(value)">> task</button>
         </td>
         <template v-if="value.isManaged">
-          <td><span>{{ value.summary['担当'] }}</span></td>
+          <td><span>{{ value.summary.assign }}</span></td>
           <td>
             <template v-if="value.latestNote">
               {{value.latestNote.date.toLocaleDateString()}}<br>
@@ -178,10 +183,11 @@ th:first-child, td:first-child {
             
         
           </td>
-          <td><span v-html="br(value.summary['DONEの定義'])"></span></td>
-          <td><p v-for="milestone in value.summary.milestones.list" v-bind:class="milestone.isWithinOneWeek ? 'caution' : ''">{{milestone.dateInTask.text}} {{milestone.title}}</p></td>
+          <td><span v-html="br(value.summary.goal)"></span></td>
+          <td v-if="value.editingText.isEditingMilestones == false" style="cursor: pointer" v-on:click="value.editingText.isEditingMilestones=true"><p v-for="milestone in value.summary.milestones.list" v-bind:class="milestone.isWithinOneWeek ? 'caution' : ''">{{milestone.dateInTask.text}} {{milestone.title}}</p></td>
+          <td v-if="value.editingText.isEditingMilestones == true"><textarea v-model="value.editingText.milestones"></textarea><button v-on:click="updateSummary(value)">保存</button><button v-on:click="reload()">キャンセル</button></td>
 
-          <td v-bind:class="value.isManaged && value.isBeforeStartDate ? 'before-start-date' : ''"><span>{{ value.summary['開始日'] }}<br>〜{{value.summary['終了日'] }}</span></td>
+          <td v-bind:class="value.isManaged && value.isBeforeStartDate ? 'before-start-date' : ''"><span>{{ value.summary.startDate ? value.summary.startDate.text : '' }}<br>〜{{value.summary.endDate ? value.summary.endDate.text : ''}}</span></td>
           <!--
           <td></td>
           <td></td>
@@ -197,10 +203,10 @@ th:first-child, td:first-child {
           <td></td>
           -->
           
-          <td><span v-html="br(value.summary['関係者'])"></span></td>
-          <td><span>{{ value.summary['完了'] }}</span></td>
-          <td><span v-html="br(value.summary['内容'])"></span></td>
-          <td><span><p v-for="link in value.summary['リンク']"><a v-bind:href="link.path" target="_blank">{{link.title}}</a></p></span></td>
+          <td><span v-html="br(value.summary.related)"></span></td>
+          <td><span>{{ value.summary.complateDate }}</span></td>
+          <td><span v-html="br(value.summary.description)"></span></td>
+          <td><span><p v-for="link in value.summary.links"><a v-bind:href="link.path" target="_blank">{{link.title}}</a></p></span></td>
         </template>
         <template v-else>
           <td></td>

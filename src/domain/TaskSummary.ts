@@ -1,9 +1,69 @@
-export type TaskSummary = {
-  issueNumber: number,
-  isDone: boolean,
-  isBeforeStartDate: boolean,
-  milestones: Milestones
+import { TaskId } from "./TaskId";
+
+export interface TaskSummaryIF {
+  taskId: TaskId;
+  issueNumber: number;
+  isDone: boolean;
+  isBeforeStartDate: boolean;
+  milestones: Milestones;
+  assign: string;
+  related: string;
+  goal: string;
+  startDate?: DateInTask;
+  endDate?: DateInTask;
+  completeDate?: DateInTask;
+  description: string;
+  links: {title: string, path: string, isHttp: boolean}[];
 }
+
+export class TaskSummary implements TaskSummaryIF {
+  taskId: TaskId;
+  issueNumber: number;
+  isDone: boolean;
+  isBeforeStartDate: boolean;
+  milestones: Milestones;
+  assign: string;
+  related: string;
+  goal: string;
+  startDate?: DateInTask;
+  endDate?: DateInTask;
+  completeDate?: DateInTask;
+  description: string;
+  links: {title: string, path: string, isHttp: boolean}[]
+  constructor(org: TaskSummaryIF) {
+    this.taskId = org.taskId;
+    this.issueNumber = org.issueNumber;
+    this.isDone = org.isDone;
+    this.isBeforeStartDate = org.isBeforeStartDate;
+    this.milestones = org.milestones;
+    this.assign = org.assign;
+    this.related = org.related;
+    this.goal = org.goal;
+    this.startDate = org.startDate;
+    this.endDate = org.endDate;
+    this.completeDate = org.completeDate;
+    this.description = org.description;
+    this.links = org.links;
+  }
+
+  updateMilestones(milestones: Milestones): TaskSummary {
+    var result = new TaskSummary(this);
+    result.milestones = milestones;
+    return result;
+  }
+
+}
+
+/*
+### 担当: 
+### 関係者: 
+### DONEの定義: 
+### マイルストーン: 
+### 開始日: 
+### 終了日: 
+### 内容: 
+### リンク:
+*/
 
 export class Milestone {
   readonly isDone: boolean;
@@ -49,11 +109,10 @@ export class DateInTask {
   }
 }
 
-
-
 export interface TaskSummaryRepository {
-  getSummary(num: number, now: Date): TaskSummary;
+  getSummary(num: TaskId, now: Date): TaskSummary;
   create(event: CreateTaskSummaryEvent, cb: (err?, issueNumber?: number)=>void)
+  update(summary: TaskSummary, cb: (err?)=>void)
 }
 export class CreateTaskSummaryEvent {
   constructor(readonly title: string) {}

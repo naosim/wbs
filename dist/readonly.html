@@ -291,7 +291,7 @@ th:first-child {
           <td><span v-html="br(value.summary['関係者'])"></span></td>
           <td><span>{{ value.summary['完了'] }}</span></td>
           <td><span v-html="br(value.summary['内容'])"></span></td>
-          <td><span><p v-for="link in value.summary['リンク']"><a v-bind:href="link.path" target="_blank">{{link.title}}</a></p></span></td>
+          <td><span><p v-for="link in value.summary.links"><a v-bind:href="link.path" target="_blank">{{link.title}}</a></p></span></td>
         </template>
         <template v-else>
           <td></td>
