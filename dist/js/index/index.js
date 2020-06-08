@@ -502,7 +502,37 @@ var __spreadArrays = this && this.__spreadArrays || function () {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.CreateTaskSummaryEvent = exports.DateInTask = exports.Milestones = exports.Milestone = void 0;
+exports.CreateTaskSummaryEvent = exports.DateInTask = exports.Milestones = exports.Milestone = exports.TaskSummary = void 0;
+
+var TaskSummary =
+/** @class */
+function () {
+  function TaskSummary(org) {
+    this.taskId = org.taskId;
+    this.issueNumber = org.issueNumber;
+    this.isDone = org.isDone;
+    this.isBeforeStartDate = org.isBeforeStartDate;
+    this.milestones = org.milestones;
+    this.assign = org.assign;
+    this.related = org.related;
+    this.goal = org.goal;
+    this.startDate = org.startDate;
+    this.endDate = org.endDate;
+    this.completeDate = org.completeDate;
+    this.description = org.description;
+    this.links = org.links;
+  }
+
+  TaskSummary.prototype.updateMilestones = function (milestones) {
+    var result = new TaskSummary(this);
+    result.milestones = milestones;
+    return result;
+  };
+
+  return TaskSummary;
+}();
+
+exports.TaskSummary = TaskSummary;
 /*
 ### 担当:
 ### 関係者:
@@ -610,53 +640,15 @@ function () {
 }();
 
 exports.CreateTaskSummaryEvent = CreateTaskSummaryEvent;
-},{}],"infra/tasksummary/TaskSummaryImpl.ts":[function(require,module,exports) {
+},{}],"infra/tasksummary/MilestoneFactory.ts":[function(require,module,exports) {
 "use strict";
-
-var __spreadArrays = this && this.__spreadArrays || function () {
-  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
-    s += arguments[i].length;
-  }
-
-  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
-    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
-      r[k] = a[j];
-    }
-  }
-
-  return r;
-};
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.TaskSummaryRepositoryImpl = exports.MilestoneFactory = exports.DateInTaskFactory = void 0;
+exports.MilestoneFactory = void 0;
 
 var TaskSummary_1 = require("../../domain/TaskSummary");
-
-var DateInTaskFactory =
-/** @class */
-function () {
-  function DateInTaskFactory() {}
-
-  DateInTaskFactory.create = function (dateText, now) {
-    var parts = dateText.split('/').map(function (v) {
-      return parseInt(v);
-    });
-
-    if (parts.length == 2) {
-      // ex 6/23
-      parts = __spreadArrays([parts[0] <= 3 ? now.getFullYear() + 1 : now.getFullYear()], parts);
-    }
-
-    var date = new Date(parts.join('/'));
-    return new TaskSummary_1.DateInTask(dateText, date);
-  };
-
-  return DateInTaskFactory;
-}();
-
-exports.DateInTaskFactory = DateInTaskFactory;
 
 var MilestoneFactory =
 /** @class */
@@ -701,6 +693,55 @@ function () {
 }();
 
 exports.MilestoneFactory = MilestoneFactory;
+},{"../../domain/TaskSummary":"domain/TaskSummary.ts"}],"infra/tasksummary/TaskSummaryImpl.ts":[function(require,module,exports) {
+"use strict";
+
+var __spreadArrays = this && this.__spreadArrays || function () {
+  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
+    s += arguments[i].length;
+  }
+
+  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
+    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
+      r[k] = a[j];
+    }
+  }
+
+  return r;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.TaskSummaryRepositoryImpl = exports.DateInTaskFactory = void 0;
+
+var TaskSummary_1 = require("../../domain/TaskSummary");
+
+var MilestoneFactory_1 = require("./MilestoneFactory");
+
+var DateInTaskFactory =
+/** @class */
+function () {
+  function DateInTaskFactory() {}
+
+  DateInTaskFactory.create = function (dateText, now) {
+    var parts = dateText.split('/').map(function (v) {
+      return parseInt(v);
+    });
+
+    if (parts.length == 2) {
+      // ex 6/23
+      parts = __spreadArrays([parts[0] <= 3 ? now.getFullYear() + 1 : now.getFullYear()], parts);
+    }
+
+    var date = new Date(parts.join('/'));
+    return new TaskSummary_1.DateInTask(dateText, date);
+  };
+
+  return DateInTaskFactory;
+}();
+
+exports.DateInTaskFactory = DateInTaskFactory;
 
 var TaskSummaryRepositoryImpl =
 /** @class */
@@ -714,7 +755,7 @@ function () {
    */
 
 
-  TaskSummaryRepositoryImpl.convert = function (issue, now) {
+  TaskSummaryRepositoryImpl.convert = function (issue, taskId, now) {
     // bodyをパース
     var obj = issue.body.split('### ').slice(1).map(function (v) {
       var first = v.split('\n')[0];
@@ -758,7 +799,7 @@ function () {
     obj.links = obj['リンク'];
     obj.isDone = obj['完了'] && obj['完了'].trim().length > 0;
     obj.isBeforeStartDate = obj['開始日'] && new Date(obj['開始日']) && new Date(obj['開始日']).getTime() > now.getTime();
-    obj.milestones = MilestoneFactory.createMilestones(obj['マイルストーン'], now);
+    obj.milestones = MilestoneFactory_1.MilestoneFactory.createMilestones(obj['マイルストーン'], now);
     /*
     milestones: Milestones,
     assign: string,
@@ -778,9 +819,9 @@ function () {
     obj.endDate = obj['終了日'].length > 0 ? DateInTaskFactory.create(obj['終了日'], now) : null;
     obj.completeDate = obj['完了'] && obj['完了'].length > 0 ? DateInTaskFactory.create(obj['完了'], now) : null; // issue番号
 
-    obj.issueNumber = issue.number;
-    obj.taskId = issue.number;
-    return obj;
+    obj.issueNumber = issue.number || taskId;
+    obj.taskId = issue.number || taskId;
+    return new TaskSummary_1.TaskSummary(obj);
   };
 
   TaskSummaryRepositoryImpl.prototype.getSummary = function (num, now) {
@@ -790,12 +831,12 @@ function () {
 
 
     var issue = this.issueRepository.getIssue(num);
-    var s = TaskSummaryRepositoryImpl.convert(issue, now);
+    var s = TaskSummaryRepositoryImpl.convert(issue, num, now);
     return s;
   };
 
   TaskSummaryRepositoryImpl.prototype.create = function (event, cb) {
-    var body = "\n### \u62C5\u5F53: \n### \u95A2\u4FC2\u8005: \n### DONE\u306E\u5B9A\u7FA9: \n### \u30DE\u30A4\u30EB\u30B9\u30C8\u30FC\u30F3: \n### \u958B\u59CB\u65E5: \n### \u7D42\u4E86\u65E5: \n### \u5185\u5BB9: \n### \u30EA\u30F3\u30AF:\n".trim();
+    var body = "\n### \u62C5\u5F53: \n### \u95A2\u4FC2\u8005: \n### DONE\u306E\u5B9A\u7FA9: \n### \u30DE\u30A4\u30EB\u30B9\u30C8\u30FC\u30F3: \n### \u958B\u59CB\u65E5: \n### \u7D42\u4E86\u65E5: \n### \u5185\u5BB9: \n### \u30EA\u30F3\u30AF:\n### \u5B8C\u4E86:\n".trim();
     this.issueRepository.createIssue({
       title: event.title,
       body: body
@@ -848,7 +889,7 @@ function () {
 }();
 
 exports.TaskSummaryRepositoryImpl = TaskSummaryRepositoryImpl;
-},{"../../domain/TaskSummary":"domain/TaskSummary.ts"}],"domain/TaskNote.ts":[function(require,module,exports) {
+},{"../../domain/TaskSummary":"domain/TaskSummary.ts","./MilestoneFactory":"infra/tasksummary/MilestoneFactory.ts"}],"domain/TaskNote.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1374,6 +1415,8 @@ var UpdateNoteBodyService_1 = require("./service/UpdateNoteBodyService");
 
 var CreateEmptyNoteService_1 = require("./service/CreateEmptyNoteService");
 
+var MilestoneFactory_1 = require("./infra/tasksummary/MilestoneFactory");
+
 var Services =
 /** @class */
 function () {
@@ -1419,7 +1462,20 @@ function () {
 
 function setup(taskSummaryRepository, taskNoteRepository, taskTreeRepository, now) {
   var taskListFactory = new TaskListFactory_1.TaskListFactory(taskSummaryRepository, taskNoteRepository, taskTreeRepository, now);
-  var tasks = taskListFactory.create();
+  var tasks = taskListFactory.create().map(function (v) {
+    if (!v.isManaged) {
+      return v;
+    }
+
+    v = v;
+    var obj = v; // vue用に変更
+
+    obj.editingMilestonesText = v.summary.milestones.list.map(function (v) {
+      return v.dateText + " " + v.title;
+    }).join('\n');
+    v.isEditingMilestones = false;
+    return obj;
+  });
 
   var callbackToReload = function callbackToReload(err) {
     if (err) throw err;
@@ -1431,8 +1487,12 @@ function setup(taskSummaryRepository, taskNoteRepository, taskTreeRepository, no
     el: '#app',
     data: {
       message: 'Hello Vue!',
-      list: tasks,
-      rootBody: taskTreeRepository.getTaskRootBody(),
+      list: []
+      /*tasks*/
+      ,
+      rootBody: ''
+      /*taskTreeRepository.getTaskRootBody()*/
+      ,
       filter: '',
       owner: config.owner,
       repo: config.repo,
@@ -1464,6 +1524,7 @@ function setup(taskSummaryRepository, taskNoteRepository, taskTreeRepository, no
       decoratedList: function decoratedList() {
         var _this = this;
 
+        console.log('decoratedList');
         var result = this.list;
         var filterTargetsForSummary = ['担当', '内容', 'マイルストーン'];
         var fitlerTargetMap = {
@@ -1496,6 +1557,7 @@ function setup(taskSummaryRepository, taskNoteRepository, taskTreeRepository, no
             v.isHilight = true;
           }
 
+          v.isEditingMilestones = false;
           return v;
         });
         return result;
@@ -1503,7 +1565,23 @@ function setup(taskSummaryRepository, taskNoteRepository, taskTreeRepository, no
     },
     methods: {
       reload: function reload() {
-        this.list = taskListFactory.create();
+        this.list = taskListFactory.create().map(function (v) {
+          if (!v.isManaged) {
+            return v;
+          }
+
+          v = v;
+          var obj = v; // vue用に変更
+
+          var editingText = {
+            milestones: v.summary.milestones.list.map(function (v) {
+              return v.dateText + " " + v.title;
+            }).join('\n'),
+            isEditingMilestones: false
+          };
+          obj.editingText = editingText;
+          return obj;
+        });
         this.rootBody = taskTreeRepository.getTaskRootBody();
       },
       onPressedRootBodyEdit: function onPressedRootBodyEdit() {
@@ -1522,14 +1600,18 @@ function setup(taskSummaryRepository, taskNoteRepository, taskTreeRepository, no
       createNote: function createNote(taskId) {
         services.createEmptyNoteService.create(taskId, callbackToReload);
       },
-      hoge: function hoge(tasksummary) {
-        console.log(tasksummary); // tasksummary.milestones = new Milestones([new Milestone(new DateInTask('2020/1/1', new Date('2020/1/1')), 'hoge', now)]);
-        // taskSummaryRepository.update(tasksummary, callbackToReload)
+      updateSummary: function updateSummary(obj) {
+        console.log(obj);
+        var editingText = obj.editingText;
+        var ms = MilestoneFactory_1.MilestoneFactory.createMilestones(editingText.milestones, now);
+        var s = taskSummaryRepository.getSummary(obj.taskId, now);
+        taskSummaryRepository.update(s.updateMilestones(ms), callbackToReload);
       }
     }
   });
+  app.reload();
 }
-},{"./infra/github/IssueRepositoryImpl":"infra/github/IssueRepositoryImpl.ts","./infra/github/IssueRepositoryDummy":"infra/github/IssueRepositoryDummy.ts","./infra/github/CommentRepositoryImpl":"infra/github/CommentRepositoryImpl.ts","./infra/github/CommentRepositoryDummy":"infra/github/CommentRepositoryDummy.ts","./infra/tasksummary/TaskSummaryImpl":"infra/tasksummary/TaskSummaryImpl.ts","./infra/tasknote/TaskNoteRepositoryImpl":"infra/tasknote/TaskNoteRepositoryImpl.ts","./domain/TaskTree":"domain/TaskTree.ts","./TaskListFactory":"TaskListFactory.ts","./service/TitleOnlyToMangedService":"service/TitleOnlyToMangedService.ts","./service/UpdateNoteBodyService":"service/UpdateNoteBodyService.ts","./service/CreateEmptyNoteService":"service/CreateEmptyNoteService.ts"}],"../../../../../../usr/local/lib/node_modules/parcel/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./infra/github/IssueRepositoryImpl":"infra/github/IssueRepositoryImpl.ts","./infra/github/IssueRepositoryDummy":"infra/github/IssueRepositoryDummy.ts","./infra/github/CommentRepositoryImpl":"infra/github/CommentRepositoryImpl.ts","./infra/github/CommentRepositoryDummy":"infra/github/CommentRepositoryDummy.ts","./infra/tasksummary/TaskSummaryImpl":"infra/tasksummary/TaskSummaryImpl.ts","./infra/tasknote/TaskNoteRepositoryImpl":"infra/tasknote/TaskNoteRepositoryImpl.ts","./domain/TaskTree":"domain/TaskTree.ts","./TaskListFactory":"TaskListFactory.ts","./service/TitleOnlyToMangedService":"service/TitleOnlyToMangedService.ts","./service/UpdateNoteBodyService":"service/UpdateNoteBodyService.ts","./service/CreateEmptyNoteService":"service/CreateEmptyNoteService.ts","./infra/tasksummary/MilestoneFactory":"infra/tasksummary/MilestoneFactory.ts"}],"../../../../../../usr/local/lib/node_modules/parcel/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;

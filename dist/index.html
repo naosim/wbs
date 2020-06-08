@@ -172,7 +172,7 @@ td:first-child {
           <span v-if="value.isTitleOnly">{{ value.title }}</span> <button v-if="value.isTitleOnly" v-on:click="createTask(value)">> task</button>
         </td>
         <template v-if="value.isManaged">
-          <td><span>{{ value.summary['担当'] }}</span></td>
+          <td><span>{{ value.summary.assign }}</span></td>
           <td>
             <template v-if="value.latestNote">
               {{value.latestNote.date.toLocaleDateString()}}<br>
@@ -183,10 +183,11 @@ td:first-child {
             
         
           </td>
-          <td><span v-html="br(value.summary['DONEの定義'])"></span></td>
-          <td style="cursor: pointer" v-on:click="hoge(value.summary)"><p v-for="milestone in value.summary.milestones.list" v-bind:class="milestone.isWithinOneWeek ? 'caution' : ''">{{milestone.dateInTask.text}} {{milestone.title}}</p></td>
+          <td><span v-html="br(value.summary.goal)"></span></td>
+          <td v-if="value.editingText.isEditingMilestones == false" style="cursor: pointer" v-on:click="value.editingText.isEditingMilestones=true"><p v-for="milestone in value.summary.milestones.list" v-bind:class="milestone.isWithinOneWeek ? 'caution' : ''">{{milestone.dateInTask.text}} {{milestone.title}}</p></td>
+          <td v-if="value.editingText.isEditingMilestones == true"><textarea v-model="value.editingText.milestones"></textarea><button v-on:click="updateSummary(value)">保存</button><button v-on:click="reload()">キャンセル</button></td>
 
-          <td v-bind:class="value.isManaged && value.isBeforeStartDate ? 'before-start-date' : ''"><span>{{ value.summary['開始日'] }}<br>〜{{value.summary['終了日'] }}</span></td>
+          <td v-bind:class="value.isManaged && value.isBeforeStartDate ? 'before-start-date' : ''"><span>{{ value.summary.startDate ? value.summary.startDate.text : '' }}<br>〜{{value.summary.endDate ? value.summary.endDate.text : ''}}</span></td>
           <!--
           <td></td>
           <td></td>
@@ -202,9 +203,9 @@ td:first-child {
           <td></td>
           -->
           
-          <td><span v-html="br(value.summary['関係者'])"></span></td>
-          <td><span>{{ value.summary['完了'] }}</span></td>
-          <td><span v-html="br(value.summary['内容'])"></span></td>
+          <td><span v-html="br(value.summary.related)"></span></td>
+          <td><span>{{ value.summary.complateDate }}</span></td>
+          <td><span v-html="br(value.summary.description)"></span></td>
           <td><span><p v-for="link in value.summary.links"><a v-bind:href="link.path" target="_blank">{{link.title}}</a></p></span></td>
         </template>
         <template v-else>

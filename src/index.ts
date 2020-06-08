@@ -1,5 +1,5 @@
 /// <reference path="./sugar.d.ts" />
-import {NodeTask, TaskIf, TitleOnlyTask} from './domain/task'
+import {NodeTask, TaskIf, TitleOnlyTask, ManagedTask} from './domain/task'
 import {IssueRepository} from './domain/github/IssueRepository'
 import {IssueRepositoryImpl} from './infra/github/IssueRepositoryImpl'
 import {IssueRepositoryDummy} from './infra/github/IssueRepositoryDummy'
@@ -16,6 +16,7 @@ import { TaskListFactory } from './TaskListFactory'
 import { TitleOnlyToMangedService } from './service/TitleOnlyToMangedService'
 import { UpdateNoteBodyService } from './service/UpdateNoteBodyService'
 import { CreateEmptyNoteService } from './service/CreateEmptyNoteService'
+import { MilestoneFactory } from './infra/tasksummary/MilestoneFactory'
 declare var Vue: any;
 declare var config: { 
   githubToken: string, 
@@ -23,6 +24,11 @@ declare var config: {
   repo: string,
   taskRootIssueNumber: number ,
   isDevelop:boolean
+}
+
+type EditingText = {
+  milestones: string;
+  isEditingMilestones: boolean;
 }
 
 class Services {
@@ -84,7 +90,17 @@ function setup(
   now: Date
   ) {
   var taskListFactory = new TaskListFactory(taskSummaryRepository, taskNoteRepository, taskTreeRepository, now);
-  var tasks = taskListFactory.create()
+  var tasks = taskListFactory.create().map(v => {
+    if(!v.isManaged) {
+      return v;
+    }
+    v = v as ManagedTask;
+    var obj = v as any;// vue用に変更
+    obj.editingMilestonesText = v.summary.milestones.list.map(v => `${v.dateText} ${v.title}`).join('\n');
+    (v as any).isEditingMilestones = false;
+    
+    return obj;
+  })
   var callbackToReload = (err?) => {
     if(err) throw err;
     app.reload();
@@ -98,8 +114,8 @@ function setup(
     el: '#app',
     data: {
       message: 'Hello Vue!',
-      list: tasks,
-      rootBody: taskTreeRepository.getTaskRootBody(),
+      list: []/*tasks*/,
+      rootBody: ''/*taskTreeRepository.getTaskRootBody()*/,
       filter: '',
       owner: config.owner,
       repo: config.repo,
@@ -114,6 +130,7 @@ function setup(
     },
     computed: {
       decoratedList: function() {
+        console.log('decoratedList');
         var result = this.list;
         var filterTargetsForSummary = ['担当', '内容', 'マイルストーン'];
 
@@ -133,6 +150,8 @@ function setup(
             v.isHilight = true;
           }
 
+          v.isEditingMilestones = false;
+
           return v;
         })
         return result;
@@ -140,7 +159,20 @@ function setup(
     },
     methods: {
       reload: function(){
-        this.list = taskListFactory.create()
+        this.list = taskListFactory.create().map(v => {
+          if(!v.isManaged) {
+            return v;
+          }
+          v = v as ManagedTask;
+          var obj = v as any;// vue用に変更
+          var editingText: EditingText = {
+            milestones: v.summary.milestones.list.map(v => `${v.dateText} ${v.title}`).join('\n'),
+            isEditingMilestones: false
+          };
+          obj.editingText = editingText;
+          
+          return obj;
+        })
         this.rootBody = taskTreeRepository.getTaskRootBody()
       },
       onPressedRootBodyEdit: function() {
@@ -159,13 +191,20 @@ function setup(
       createNote(taskId: TaskId) {
         services.createEmptyNoteService.create(taskId, callbackToReload)
       },
-      hoge(tasksummary) {
-        console.log(tasksummary);
-        // tasksummary.milestones = new Milestones([new Milestone(new DateInTask('2020/1/1', new Date('2020/1/1')), 'hoge', now)]);
-        // taskSummaryRepository.update(tasksummary, callbackToReload)
+      updateSummary(obj) {
+        console.log(obj);
+        var editingText: EditingText = obj.editingText;
+        var ms = MilestoneFactory.createMilestones(editingText.milestones, now);
+        var s = taskSummaryRepository.getSummary(obj.taskId as TaskId, now);
+        taskSummaryRepository.update(
+          s.updateMilestones(ms), 
+          callbackToReload
+        )
       }
+      
     }
+    
   })
-
+  app.reload();
 }
 

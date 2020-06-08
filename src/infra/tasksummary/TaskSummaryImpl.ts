@@ -1,6 +1,7 @@
-import { TaskSummary, DateInTask, Milestone, Milestones, CreateTaskSummaryEvent, TaskSummaryRepository } from "../../domain/TaskSummary";
+import { TaskSummaryIF, TaskSummary, DateInTask, CreateTaskSummaryEvent, TaskSummaryRepository } from "../../domain/TaskSummary";
 import { IssueRepository } from "../../domain/github/IssueRepository";
 import { TaskId } from "../../domain/TaskId";
+import { MilestoneFactory } from "./MilestoneFactory";
 export class DateInTaskFactory {
   static create(dateText: string, now: Date): DateInTask {
     var parts = dateText.split('/').map(v => parseInt(v));
@@ -12,32 +13,6 @@ export class DateInTaskFactory {
   }
 }
 
-export class MilestoneFactory {
-  // パターン
-  // 2020/1/1 タスク名
-  // 2020/1/1　タスク名全角区切り
-  // 1/1 タスク名
-  // タスク名 ほげ
-  // 1/末 タスク名
-  static create(text: string, now: Date): Milestone {
-    var splitKey = ' '
-    if(text.indexOf(splitKey) == -1) {
-      splitKey = '　';
-      if(text.indexOf(splitKey) == -1) {
-        // throw `マイルストーンがパースできない ${text}`
-        var title = text;
-        return new Milestone(new DateInTask('', new Date('2999/12/31')), title, now);
-      }
-    }
-    var dateText = text.slice(0, text.indexOf(splitKey));
-    var title = text.slice(text.indexOf(splitKey)).trim();
-    return new Milestone(DateInTask.create(dateText, now), title, now);    
-  }
-  static createMilestones(text: string, now: Date): Milestones {
-    return new Milestones(text.split('\n').map(v => v.trim()).filter(v => v.length > 0).map(v => MilestoneFactory.create(v, now)))
-  }
-}
-
 export class TaskSummaryRepositoryImpl implements TaskSummaryRepository {
   constructor(private issueRepository: IssueRepository) {
 }
@@ -46,7 +21,7 @@ export class TaskSummaryRepositoryImpl implements TaskSummaryRepository {
    * issueをsummaryに変換
    * @param issue 
    */
-  static convert(issue, now: Date): TaskSummary {
+  static convert(issue, taskId: TaskId, now: Date): TaskSummary {
     // bodyをパース
     var obj = issue.body.split('### ').slice(1).map(v => {
       var first = v.split('\n')[0];
@@ -99,9 +74,9 @@ export class TaskSummaryRepositoryImpl implements TaskSummaryRepository {
     obj.endDate = obj['終了日'].length > 0 ? DateInTaskFactory.create(obj['終了日'], now) : null
     obj.completeDate = obj['完了'] && obj['完了'].length > 0 ? DateInTaskFactory.create(obj['完了'], now) : null
     // issue番号
-    obj.issueNumber = issue.number;
-    obj.taskId = issue.number;
-    return obj;
+    obj.issueNumber = issue.number || taskId;
+    obj.taskId = issue.number || taskId;
+    return new TaskSummary(obj as TaskSummaryIF);
   }
 
   getSummary(num: TaskId, now: Date): TaskSummary {
@@ -110,7 +85,7 @@ export class TaskSummaryRepositoryImpl implements TaskSummaryRepository {
     }
     // 担当,関係者,完了,DONEの定義,マイルストーン,開始日,終了日,内容,リンク
     var issue = this.issueRepository.getIssue(num);
-    var s = TaskSummaryRepositoryImpl.convert(issue, now);
+    var s = TaskSummaryRepositoryImpl.convert(issue, num, now);
     return s;
   }
 
@@ -124,6 +99,7 @@ export class TaskSummaryRepositoryImpl implements TaskSummaryRepository {
 ### 終了日: 
 ### 内容: 
 ### リンク:
+### 完了:
 `.trim();
 
     this.issueRepository.createIssue({title: event.title, body: body}, (err, obj) => {
@@ -149,7 +125,7 @@ export class TaskSummaryRepositoryImpl implements TaskSummaryRepository {
     console.log(text);
     this.issueRepository.updateBody(summary.taskId, text, cb);
   }
-  
+
   static toMap(summary: TaskSummary) {
     return {
       '担当': summary.assign,

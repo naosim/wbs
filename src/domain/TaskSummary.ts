@@ -1,19 +1,57 @@
 import { TaskId } from "./TaskId";
 
-export type TaskSummary = {
-  taskId: TaskId,
-  issueNumber: number,
-  isDone: boolean,
-  isBeforeStartDate: boolean,
-  milestones: Milestones,
-  assign: string,
-  related: string,
-  goal: string,
-  startDate: DateInTask,
-  endDate: DateInTask,
-  completeDate: DateInTask,
-  description: string,
+export interface TaskSummaryIF {
+  taskId: TaskId;
+  issueNumber: number;
+  isDone: boolean;
+  isBeforeStartDate: boolean;
+  milestones: Milestones;
+  assign: string;
+  related: string;
+  goal: string;
+  startDate?: DateInTask;
+  endDate?: DateInTask;
+  completeDate?: DateInTask;
+  description: string;
+  links: {title: string, path: string, isHttp: boolean}[];
+}
+
+export class TaskSummary implements TaskSummaryIF {
+  taskId: TaskId;
+  issueNumber: number;
+  isDone: boolean;
+  isBeforeStartDate: boolean;
+  milestones: Milestones;
+  assign: string;
+  related: string;
+  goal: string;
+  startDate?: DateInTask;
+  endDate?: DateInTask;
+  completeDate?: DateInTask;
+  description: string;
   links: {title: string, path: string, isHttp: boolean}[]
+  constructor(org: TaskSummaryIF) {
+    this.taskId = org.taskId;
+    this.issueNumber = org.issueNumber;
+    this.isDone = org.isDone;
+    this.isBeforeStartDate = org.isBeforeStartDate;
+    this.milestones = org.milestones;
+    this.assign = org.assign;
+    this.related = org.related;
+    this.goal = org.goal;
+    this.startDate = org.startDate;
+    this.endDate = org.endDate;
+    this.completeDate = org.completeDate;
+    this.description = org.description;
+    this.links = org.links;
+  }
+
+  updateMilestones(milestones: Milestones): TaskSummary {
+    var result = new TaskSummary(this);
+    result.milestones = milestones;
+    return result;
+  }
+
 }
 
 /*
