@@ -172,7 +172,9 @@ td:first-child {
           <span v-if="value.isTitleOnly">{{ value.title }}</span> <button v-if="value.isTitleOnly" v-on:click="createTask(value)">> task</button>
         </td>
         <template v-if="value.isManaged">
-          <td><span>{{ value.summary.assign }}</span></td>
+          <td v-if="!value.editingText.isEditingAssign" style="cursor: pointer" v-on:click="value.editingText.isEditingAssign=true">{{ value.summary.assign }}</td>
+          <td v-if="value.editingText.isEditingAssign"><textarea v-model="value.editingText.assign"></textarea><button v-on:click="updateSummary(value)">保存</button><button v-on:click="reload()">キャンセル</button></td>
+
           <td>
             <template v-if="value.latestNote">
               {{value.latestNote.date.toLocaleDateString()}}<br>
@@ -184,8 +186,8 @@ td:first-child {
         
           </td>
           <td><span v-html="br(value.summary.goal)"></span></td>
-          <td v-if="value.editingText.isEditingMilestones == false" style="cursor: pointer" v-on:click="value.editingText.isEditingMilestones=true"><p v-for="milestone in value.summary.milestones.list" v-bind:class="milestone.isWithinOneWeek ? 'caution' : ''">{{milestone.dateInTask.text}} {{milestone.title}}</p></td>
-          <td v-if="value.editingText.isEditingMilestones == true"><textarea v-model="value.editingText.milestones"></textarea><button v-on:click="updateSummary(value)">保存</button><button v-on:click="reload()">キャンセル</button></td>
+          <td v-if="!value.editingText.isEditingMilestones" style="cursor: pointer" v-on:click="value.editingText.isEditingMilestones=true"><p v-for="milestone in value.summary.milestones.list" v-bind:class="milestone.isWithinOneWeek ? 'caution' : ''">{{milestone.dateInTask.text}} {{milestone.title}}</p></td>
+          <td v-if="value.editingText.isEditingMilestones"><textarea v-model="value.editingText.milestones"></textarea><button v-on:click="updateSummary(value)">保存</button><button v-on:click="reload()">キャンセル</button></td>
 
           <td v-bind:class="value.isManaged && value.isBeforeStartDate ? 'before-start-date' : ''"><span>{{ value.summary.startDate ? value.summary.startDate.text : '' }}<br>〜{{value.summary.endDate ? value.summary.endDate.text : ''}}</span></td>
           <!--

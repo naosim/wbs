@@ -51,6 +51,11 @@ export class TaskSummary implements TaskSummaryIF {
     result.milestones = milestones;
     return result;
   }
+  updateAssign(assign: string): TaskSummary {
+    var result = new TaskSummary(this);
+    result.assign = assign;
+    return result;
+  }
 
 }
 

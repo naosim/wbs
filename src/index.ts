@@ -29,6 +29,8 @@ declare var config: {
 type EditingText = {
   milestones: string;
   isEditingMilestones: boolean;
+  assign: string;
+  isEditingAssign: boolean;
 }
 
 class Services {
@@ -167,7 +169,9 @@ function setup(
           var obj = v as any;// vue用に変更
           var editingText: EditingText = {
             milestones: v.summary.milestones.list.map(v => `${v.dateText} ${v.title}`).join('\n'),
-            isEditingMilestones: false
+            isEditingMilestones: false,
+            assign: v.summary.assign,
+            isEditingAssign: false
           };
           obj.editingText = editingText;
           
@@ -194,10 +198,13 @@ function setup(
       updateSummary(obj) {
         console.log(obj);
         var editingText: EditingText = obj.editingText;
-        var ms = MilestoneFactory.createMilestones(editingText.milestones, now);
-        var s = taskSummaryRepository.getSummary(obj.taskId as TaskId, now);
+        var summary = taskSummaryRepository
+          .getSummary(obj.taskId as TaskId, now)
+          .updateMilestones(MilestoneFactory.createMilestones(editingText.milestones, now))
+          .updateAssign(editingText.assign)
+          
         taskSummaryRepository.update(
-          s.updateMilestones(ms), 
+          summary, 
           callbackToReload
         )
       }
