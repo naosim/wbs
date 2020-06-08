@@ -36,6 +36,7 @@ export class CommentRepositoryDummy implements CommentRepository {
   create(issueNumber: number, body: string, callback: (err?, obj?) => void) {
     var id = this.issueCommentsMap[issueNumber].length;
     this.issueCommentsMap[issueNumber].push({id: id, body: body})
+    // console.log(this.issueCommentsMap[issueNumber]);
     setTimeout(() => callback(null, this.issueCommentsMap[issueNumber][this.issueCommentsMap[issueNumber].length - 1]), 100);
   }
 }

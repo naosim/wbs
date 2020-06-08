@@ -9,7 +9,6 @@ export class IssueRepositoryDummy implements IssueRepository {
     setTimeout(() => callback(), 100);
   }
   getIssue(issueNumber: number): any {
-    console.log(issueNumber)
     if(!this.map[issueNumber]) {
       if(issueNumber == this.taskRootIssueNumber) {
         this.map[issueNumber] = { body: text }
@@ -57,7 +56,9 @@ var body26 = `
 ### 担当: すずき
 ### 関係者: さとう
 ### DONEの定義: 終わらす
-### マイルストーン: 
+### マイルストーン
+2020/06/06 始まりの儀
+7/9 終わりの儀
 ### 開始日: 2020/05/11
 ### 終了日: 2020/05/29
 ### 内容

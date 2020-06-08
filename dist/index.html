@@ -4,6 +4,10 @@
 html {
   margin: 12px;
 }
+p {
+  margin: 2px;
+  line-height: 1.4em;
+}
 th, td {
   font-size: 12px;
 }
@@ -91,10 +95,16 @@ th:first-child, td:first-child {
 .notTask {
   color: #840;
 }
+.caution {
+  background: #ff8400;
+}
 </style>
 <div id="app">
   <h1>WBS</h1>
+
   フィルタ: <input type="text" v-model="filter"></input>
+  <label  v-for="key in Object.keys(filterCheckbox)" v-bind:for="'checkbox_' + key"><input type="checkbox" v-bind:id="'checkbox_' + key" v-bind:value="key" v-model="filterCheckbox[key].checked">{{filterCheckbox[key].label}}</input></label>
+
   <table class="table">
     <thead>
       <th>件名</th>
@@ -114,13 +124,11 @@ th:first-child, td:first-child {
       <th>リンク</th>
       
     </thead>
-    <tr v-for="value in expandList" v-bind:class="[value.isIssuedTask && value.isDone ? 'done' : '', value.isHilight ? 'hilight' : '']">
-      <template v-if="!value.isTask">
+    <tr v-for="value in decoratedList" v-bind:class="[value.isManaged && value.isDone ? 'done' : '', value.isHilight ? 'hilight' : '']">
+      <template v-if="value.isNode">
         <td class="notTask">
           <div v-bind:class="['whitespace', value.nest]"></div>
-          <button class="disk" v-if="value.status=='closed'" v-on:click="value.status = 'opened'">+</button>
-          <button class="disk" v-if="value.status=='opened'" v-on:click="value.status = 'closed'">-</button>
-          {{ value.title }}
+          <span class="disk">・</span>{{ value.title }}
         </td>
         <td></td>
         <td></td>
@@ -145,22 +153,22 @@ th:first-child, td:first-child {
         <td></td>
       </template>
 
-      <template v-if="value.isTask">
-        <td v-bind:class="value.isTask ? 'task' : 'notTask'">
+      <template v-if="!value.isNode">
+        <td class="task">
           <div v-bind:class="['whitespace', value.nest]"></div>
-          <span class="disk">*</span>
-          <a v-if="value.issueNumber>0" v-bind:href="issueUrlPrefix + '/' + value.summary.issueNumber" target="_blank">{{ value.title }}</a>
-          <span v-if="0>value.issueNumber">{{ value.title }}</span> <button v-if="0>value.issueNumber" v-on:click="createTask(value)">> task</button>
+          <span class="disk">・</span>
+          <a v-if="value.isManaged" v-bind:href="issueUrlPrefix + '/' + value.taskId" target="_blank">{{ value.title }}</a>
+          <span v-if="value.isTitleOnly">{{ value.title }}</span> <button v-if="value.isTitleOnly" v-on:click="createTask(value)">> task</button>
         </td>
-        <template v-if="value.issueNumber>0">
+        <template v-if="value.isManaged">
           <td><span>{{ value.summary['担当'] }}</span></td>
           <td>
             <template v-if="value.latestNote">
-              {{value.latestNote.date}}<br>
+              {{value.latestNote.date.toLocaleDateString()}}<br>
               <textarea v-bind:id="'comment' + value.latestNote.id" style="width: 95%; height: 64px">{{value.latestNote.body}}</textarea><br>
-              <button v-on:click="editComment(value.issueNumber, value.latestNote.id, value.latestNote.date, '#comment' + value.latestNote.id)">更新</button>
+              <button v-on:click="editNote(value.latestNote, '#comment' + value.latestNote.id)">更新</button>
             </template>
-            <button v-on:click="createNote(value.issueNumber)">新規</button>
+            <button v-on:click="createNote(value.taskId)">新規</button>
             
         
           </td>
@@ -178,11 +186,11 @@ th:first-child, td:first-child {
           <td></td>
           <td></td>
           <td><span v-html="br(value.summary['DONEの定義'])"></span></td>
-          <td><span v-html="br(value.summary['マイルストーン'])"></span></td>
+          <td><p v-for="milestone in value.summary.milestones.list" v-bind:class="milestone.isWithinOneWeek ? 'caution' : ''">{{milestone.dateInTask.text}} {{milestone.title}}</p></td>
           <td><span v-html="br(value.summary['関係者'])"></span></td>
           <td><span>{{ value.summary['完了'] }}</span></td>
           <td><span v-html="br(value.summary['内容'])"></span></td>
-          <td><span><p v-for="link in value.summary['リンク']"><a v-bind:href="link.path">{{link.title}}</a></p></span></td>
+          <td><span><p v-for="link in value.summary['リンク']"><a v-bind:href="link.path" target="_blank">{{link.title}}</a></p></span></td>
         </template>
         <template v-else>
           <td></td>
