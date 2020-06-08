@@ -6,7 +6,7 @@ import {IssueRepositoryDummy} from './infra/github/IssueRepositoryDummy'
 import {CommentRepository} from './domain/github/CommentRepository'
 import {CommentRepositoryImpl} from './infra/github/CommentRepositoryImpl'
 import {CommentRepositoryDummy} from './infra/github/CommentRepositoryDummy'
-import { TaskSummaryRepository, TaskSummary } from './domain/TaskSummary'
+import { TaskSummaryRepository, TaskSummary, Milestones, Milestone, DateInTask } from './domain/TaskSummary'
 import { TaskSummaryRepositoryImpl } from './infra/tasksummary/TaskSummaryImpl'
 import { TaskId } from './domain/TaskId'
 import { Note, Notes, TaskNoteRepository } from './domain/TaskNote'
@@ -158,6 +158,11 @@ function setup(
       },
       createNote(taskId: TaskId) {
         services.createEmptyNoteService.create(taskId, callbackToReload)
+      },
+      hoge(tasksummary) {
+        console.log(tasksummary);
+        // tasksummary.milestones = new Milestones([new Milestone(new DateInTask('2020/1/1', new Date('2020/1/1')), 'hoge', now)]);
+        // taskSummaryRepository.update(tasksummary, callbackToReload)
       }
     }
   })

@@ -503,6 +503,16 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.CreateTaskSummaryEvent = exports.DateInTask = exports.Milestones = exports.Milestone = void 0;
+/*
+### 担当:
+### 関係者:
+### DONEの定義:
+### マイルストーン:
+### 開始日:
+### 終了日:
+### 内容:
+### リンク:
+*/
 
 var Milestone =
 /** @class */
@@ -724,7 +734,9 @@ function () {
       return memo;
     }, {}); // md形式のリンクリストをパース
 
-    obj['リンク'] = obj['リンク'].split('\n').map(function (v) {
+    obj['リンク'] = obj['リンク'].split('\n').filter(function (v) {
+      return v.length > 0;
+    }).map(function (v) {
       if (v.indexOf('[') == -1) {
         return {
           title: v,
@@ -743,11 +755,31 @@ function () {
         isHttp: path.indexOf('http') == 0
       };
     });
+    obj.links = obj['リンク'];
     obj.isDone = obj['完了'] && obj['完了'].trim().length > 0;
     obj.isBeforeStartDate = obj['開始日'] && new Date(obj['開始日']) && new Date(obj['開始日']).getTime() > now.getTime();
-    obj.milestones = MilestoneFactory.createMilestones(obj['マイルストーン'], now); // issue番号
+    obj.milestones = MilestoneFactory.createMilestones(obj['マイルストーン'], now);
+    /*
+    milestones: Milestones,
+    assign: string,
+    related: string,
+    goal: string,
+    startDate: DateInTask,
+    endDate: DateInTask,
+    description: string,
+    links: []
+    */
+
+    obj.assign = obj['担当'];
+    obj.related = obj['関係者'];
+    obj.goal = obj['DONEの定義'];
+    obj.description = obj['内容'];
+    obj.startDate = obj['開始日'].length > 0 ? DateInTaskFactory.create(obj['開始日'], now) : null;
+    obj.endDate = obj['終了日'].length > 0 ? DateInTaskFactory.create(obj['終了日'], now) : null;
+    obj.completeDate = obj['完了'] && obj['完了'].length > 0 ? DateInTaskFactory.create(obj['完了'], now) : null; // issue番号
 
     obj.issueNumber = issue.number;
+    obj.taskId = issue.number;
     return obj;
   };
 
@@ -775,6 +807,41 @@ function () {
 
       cb(null, obj.number);
     });
+  };
+
+  TaskSummaryRepositoryImpl.prototype.update = function (summary, cb) {
+    var map = TaskSummaryRepositoryImpl.toMap(summary);
+    var text = Object.keys(map).map(function (k) {
+      var value = map[k];
+
+      if (value && value.split('\n').length >= 2) {
+        return "### " + k + "\n" + value;
+      } else if (value && value.indexOf('- ') == 0) {
+        return "### " + k + "\n" + value;
+      }
+
+      return "### " + k + ": " + value;
+    }).join('\n');
+    console.log(text);
+    this.issueRepository.updateBody(summary.taskId, text, cb);
+  };
+
+  TaskSummaryRepositoryImpl.toMap = function (summary) {
+    return {
+      '担当': summary.assign,
+      '関係者': summary.related,
+      'DONEの定義': summary.goal,
+      'マイルストーン': summary.milestones.list.map(function (v) {
+        return v.dateText + " " + v.title;
+      }).join('\n'),
+      '開始日': summary.startDate ? summary.startDate.text : '',
+      '終了日': summary.endDate ? summary.endDate.text : '',
+      '内容': summary.description,
+      'リンク': summary.links.map(function (v) {
+        return "- [" + v.title + "](" + v.path + ")";
+      }).join('\n'),
+      '完了': summary.completeDate ? summary.completeDate.text : ''
+    };
   };
 
   return TaskSummaryRepositoryImpl;
@@ -1454,6 +1521,10 @@ function setup(taskSummaryRepository, taskNoteRepository, taskTreeRepository, no
       },
       createNote: function createNote(taskId) {
         services.createEmptyNoteService.create(taskId, callbackToReload);
+      },
+      hoge: function hoge(tasksummary) {
+        console.log(tasksummary); // tasksummary.milestones = new Milestones([new Milestone(new DateInTask('2020/1/1', new Date('2020/1/1')), 'hoge', now)]);
+        // taskSummaryRepository.update(tasksummary, callbackToReload)
       }
     }
   });

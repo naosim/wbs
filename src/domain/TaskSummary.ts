@@ -1,9 +1,31 @@
+import { TaskId } from "./TaskId";
+
 export type TaskSummary = {
+  taskId: TaskId,
   issueNumber: number,
   isDone: boolean,
   isBeforeStartDate: boolean,
-  milestones: Milestones
+  milestones: Milestones,
+  assign: string,
+  related: string,
+  goal: string,
+  startDate: DateInTask,
+  endDate: DateInTask,
+  completeDate: DateInTask,
+  description: string,
+  links: {title: string, path: string, isHttp: boolean}[]
 }
+
+/*
+### 担当: 
+### 関係者: 
+### DONEの定義: 
+### マイルストーン: 
+### 開始日: 
+### 終了日: 
+### 内容: 
+### リンク:
+*/
 
 export class Milestone {
   readonly isDone: boolean;
@@ -49,11 +71,10 @@ export class DateInTask {
   }
 }
 
-
-
 export interface TaskSummaryRepository {
-  getSummary(num: number, now: Date): TaskSummary;
+  getSummary(num: TaskId, now: Date): TaskSummary;
   create(event: CreateTaskSummaryEvent, cb: (err?, issueNumber?: number)=>void)
+  update(summary: TaskSummary, cb: (err?)=>void)
 }
 export class CreateTaskSummaryEvent {
   constructor(readonly title: string) {}
