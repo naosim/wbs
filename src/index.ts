@@ -31,6 +31,8 @@ type EditingText = {
   isEditingMilestones: boolean;
   assign: string;
   isEditingAssign: boolean;
+  goal: string;
+  isEditingGoal: boolean;
 }
 
 class Services {
@@ -171,7 +173,9 @@ function setup(
             milestones: v.summary.milestones.list.map(v => `${v.dateText} ${v.title}`).join('\n'),
             isEditingMilestones: false,
             assign: v.summary.assign,
-            isEditingAssign: false
+            isEditingAssign: false,
+            goal: v.summary.goal,
+            isEditingGoal: false,
           };
           obj.editingText = editingText;
           
@@ -202,7 +206,8 @@ function setup(
           .getSummary(obj.taskId as TaskId, now)
           .updateMilestones(MilestoneFactory.createMilestones(editingText.milestones, now))
           .updateAssign(editingText.assign)
-          
+          .updateGoal(editingText.goal)
+
         taskSummaryRepository.update(
           summary, 
           callbackToReload

@@ -535,6 +535,12 @@ function () {
     return result;
   };
 
+  TaskSummary.prototype.updateGoal = function (goal) {
+    var result = new TaskSummary(this);
+    result.goal = goal;
+    return result;
+  };
+
   return TaskSummary;
 }();
 
@@ -1585,7 +1591,9 @@ function setup(taskSummaryRepository, taskNoteRepository, taskTreeRepository, no
             }).join('\n'),
             isEditingMilestones: false,
             assign: v.summary.assign,
-            isEditingAssign: false
+            isEditingAssign: false,
+            goal: v.summary.goal,
+            isEditingGoal: false
           };
           obj.editingText = editingText;
           return obj;
@@ -1611,7 +1619,7 @@ function setup(taskSummaryRepository, taskNoteRepository, taskTreeRepository, no
       updateSummary: function updateSummary(obj) {
         console.log(obj);
         var editingText = obj.editingText;
-        var summary = taskSummaryRepository.getSummary(obj.taskId, now).updateMilestones(MilestoneFactory_1.MilestoneFactory.createMilestones(editingText.milestones, now)).updateAssign(editingText.assign);
+        var summary = taskSummaryRepository.getSummary(obj.taskId, now).updateMilestones(MilestoneFactory_1.MilestoneFactory.createMilestones(editingText.milestones, now)).updateAssign(editingText.assign).updateGoal(editingText.goal);
         taskSummaryRepository.update(summary, callbackToReload);
       }
     }

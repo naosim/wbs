@@ -56,6 +56,12 @@ export class TaskSummary implements TaskSummaryIF {
     result.assign = assign;
     return result;
   }
+  updateGoal(goal: string): TaskSummary {
+    var result = new TaskSummary(this);
+    result.goal = goal;
+    return result;
+  }
+
 
 }
 

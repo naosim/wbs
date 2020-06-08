@@ -1,4 +1,4 @@
-import {IssueRepository} from './IssueRepository'
+import {IssueRepository} from '../../domain/github/IssueRepository'
 declare var GitHub: any;
 
 export class IssueRepositoryImpl implements IssueRepository {
