@@ -121,7 +121,9 @@ th:first-child {
 
       <th style="width: 100px">期間</th>
 
+      <!--
       <th class="date">4</th><th class="date">5</th><th class="date">6</th><th class="date">7</th><th class="date">8</th><th class="date">9</th><th class="date">10</th><th class="date">11</th><th class="date">12</th><th class="date">1</th><th class="date">2</th><th class="date">3</th>
+      -->
 
       <th>関係者</th>
       <th>完了</th>
@@ -181,6 +183,8 @@ th:first-child {
         <td></td>
         <td></td>
         <td></td>
+
+        <!--
         <td></td>
         <td></td>
         <td></td>
@@ -193,6 +197,7 @@ th:first-child {
         <td></td>
         <td></td>
         <td></td>
+        -->
         <td></td>
         <td></td>
         <td></td>
@@ -267,6 +272,8 @@ th:first-child {
           <td><p v-for="milestone in value.summary.milestones.list" v-bind:class="milestone.isWithinOneWeek ? 'caution' : ''">{{milestone.dateInTask.text}} {{milestone.title}}</p></td>
 
           <td v-bind:class="value.isManaged && value.isBeforeStartDate ? 'before-start-date' : ''"><span>{{ value.summary['開始日'] }}<br>〜{{value.summary['終了日'] }}</span></td>
+
+          <!--
           <td></td>
           <td></td>
           <td></td>
@@ -279,6 +286,7 @@ th:first-child {
           <td></td>
           <td></td>
           <td></td>
+          -->
           
           <td><span v-html="br(value.summary['関係者'])"></span></td>
           <td><span>{{ value.summary['完了'] }}</span></td>
@@ -291,6 +299,8 @@ th:first-child {
           <td></td>
           <td></td>
           <td></td>
+
+          <!--
           <td></td>
           <td></td>
           <td></td>
@@ -303,6 +313,8 @@ th:first-child {
           <td></td>
           <td></td>
           <td></td>
+          -->
+
           <td></td>
           <td></td>
           <td></td>
