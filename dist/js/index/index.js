@@ -507,11 +507,15 @@ exports.CreateTaskSummaryEvent = exports.DateInTask = exports.Milestones = expor
 var Milestone =
 /** @class */
 function () {
-  function Milestone(dateInTask, title, isDone, now) {
+  function Milestone(dateInTask, title, now) {
+    var _this = this;
+
     this.dateInTask = dateInTask;
     this.title = title;
-    this.isDone = isDone;
     this.now = now;
+    this.isDone = ['done', '完了', '了', '済', '済み'].some(function (key) {
+      return _this.title.indexOf("[" + key + "]") != -1;
+    });
   }
 
   Object.defineProperty(Milestone.prototype, "dateText", {
@@ -664,19 +668,13 @@ function () {
       if (text.indexOf(splitKey) == -1) {
         // throw `マイルストーンがパースできない ${text}`
         var title = text;
-        var isDone = ['done', '完了', '了'].some(function (key) {
-          return title.indexOf("[" + key + "]") != -1;
-        });
-        return new TaskSummary_1.Milestone(new TaskSummary_1.DateInTask('', new Date('2999/12/31')), title, isDone, now);
+        return new TaskSummary_1.Milestone(new TaskSummary_1.DateInTask('', new Date('2999/12/31')), title, now);
       }
     }
 
     var dateText = text.slice(0, text.indexOf(splitKey));
     var title = text.slice(text.indexOf(splitKey)).trim();
-    var isDone = ['done', '完了', '了'].some(function (key) {
-      return title.indexOf("[" + key + "]") != -1;
-    });
-    return new TaskSummary_1.Milestone(TaskSummary_1.DateInTask.create(dateText, now), title, isDone, now);
+    return new TaskSummary_1.Milestone(TaskSummary_1.DateInTask.create(dateText, now), title, now);
   };
 
   MilestoneFactory.createMilestones = function (text, now) {

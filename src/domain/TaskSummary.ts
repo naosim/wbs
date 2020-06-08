@@ -6,16 +6,18 @@ export type TaskSummary = {
 }
 
 export class Milestone {
+  readonly isDone: boolean;
   constructor(
     public dateInTask: DateInTask, 
-    public title: string, 
-    public isDone: boolean,
+    public title: string,
     private now: Date
   ) {
+    this.isDone = ['done', '完了', '了', '済', '済み'].some(key => this.title.indexOf(`[${key}]`) != -1);
   }
   get dateText(): string {
     return this.dateInTask.text;
   }
+  
   isWithin(pastDate: Date): boolean {
     if(this.isDone) {
       return false;
