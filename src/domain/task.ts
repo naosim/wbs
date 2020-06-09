@@ -30,7 +30,8 @@ export class TitleOnlyTask implements TaskIf {
 
   constructor(
     public title: string,
-    public nest: string
+    public nest: string,
+    readonly packages: string[]
   ) {}
   toMangedTask(): CreateTaskSummaryEvent {
     return new CreateTaskSummaryEvent(this.title);
@@ -46,12 +47,14 @@ export class ManagedTask implements TaskIf {
   readonly isBeforeStartDate: boolean;
   readonly isAfterEndDate: boolean;
   readonly latestNoteText: string;
+  
   constructor(
     readonly taskId: TaskId,
     readonly title: string,
     readonly summary: TaskSummary,
     readonly latestNote: Note | null,
-    public nest: string
+    public nest: string,
+    readonly packages: string[]
   ) {
     this.isDone = summary.isDone;
     this.isBeforeStartDate = summary.isBeforeStartDate;

@@ -1070,6 +1070,20 @@ exports.TaskNoteRepositoryImpl = TaskNoteRepositoryImpl;
 },{"../../domain/TaskNote":"domain/TaskNote.ts"}],"domain/TaskTree.ts":[function(require,module,exports) {
 "use strict";
 
+var __spreadArrays = this && this.__spreadArrays || function () {
+  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
+    s += arguments[i].length;
+  }
+
+  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
+    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
+      r[k] = a[j];
+    }
+  }
+
+  return r;
+};
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -1085,6 +1099,7 @@ function () {
 
     this.value = value;
     this.children = children;
+    this.package = [];
   }
 
   Object.defineProperty(TreeNode.prototype, "hasChildren", {
@@ -1104,6 +1119,7 @@ function () {
   });
 
   TreeNode.prototype.addChild = function (node) {
+    node.package = __spreadArrays(this.package, [this.value]);
     this.children.push(node);
   };
 
@@ -1210,9 +1226,10 @@ exports.NodeTask = NodeTask;
 var TitleOnlyTask =
 /** @class */
 function () {
-  function TitleOnlyTask(title, nest) {
+  function TitleOnlyTask(title, nest, packages) {
     this.title = title;
     this.nest = nest;
+    this.packages = packages;
     this.isNode = false;
     this.isTitleOnly = true;
     this.isManaged = false;
@@ -1230,12 +1247,13 @@ exports.TitleOnlyTask = TitleOnlyTask;
 var ManagedTask =
 /** @class */
 function () {
-  function ManagedTask(taskId, title, summary, latestNote, nest) {
+  function ManagedTask(taskId, title, summary, latestNote, nest, packages) {
     this.taskId = taskId;
     this.title = title;
     this.summary = summary;
     this.latestNote = latestNote;
     this.nest = nest;
+    this.packages = packages;
     this.isNode = false;
     this.isTitleOnly = false;
     this.isManaged = true;
@@ -1286,13 +1304,17 @@ function () {
 
     if (node.value.taskId) {
       // managed
-      return new task_1.ManagedTask(node.value.taskId, title, this.taskSummaryRepository.getSummary(node.value.taskId, this.now), this.taskNoteRepository.getNotes(node.value.taskId).latestNote, nest);
+      return new task_1.ManagedTask(node.value.taskId, title, this.taskSummaryRepository.getSummary(node.value.taskId, this.now), this.taskNoteRepository.getNotes(node.value.taskId).latestNote, nest, node.package.map(function (v) {
+        return v.title;
+      }));
     } else if (node.hasChildren) {
       return new task_1.NodeTask(title, node.children.map(function (v) {
         return _this.treeNodeToTask(v, nestNum + 1);
       }), nest);
     } else {
-      return new task_1.TitleOnlyTask(title, nest);
+      return new task_1.TitleOnlyTask(title, nest, node.package.map(function (v) {
+        return v.title;
+      }));
     }
   };
 
@@ -1603,6 +1625,7 @@ function setup(taskSummaryRepository, taskNoteRepository, taskTreeRepository, no
           obj.editingText = editingText;
           return obj;
         });
+        console.log(this.list);
         this.rootBody = taskTreeRepository.getTaskRootBody();
       },
       onPressedRootBodyEdit: function onPressedRootBodyEdit() {

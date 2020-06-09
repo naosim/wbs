@@ -211,7 +211,7 @@ td:first-child {
           -->
           
           <td><span v-html="br(value.summary.related)"></span></td>
-          <td><span>{{ value.summary.complateDate }}</span></td>
+          <td><span>{{ value.summary.completeDate ? value.summary.completeDate.text : '' }}</span></td>
           <td><span v-html="br(value.summary.description)"></span></td>
           <td><span><p v-for="link in value.summary.links"><a v-bind:href="link.path" target="_blank">{{link.title}}</a></p></span></td>
         </template>

@@ -13,13 +13,13 @@ export class TaskListFactory {
     var title = node.value.title;
     var nest = `nest${nestNum}`;
     if (node.value.taskId) { // managed
-      return new ManagedTask(node.value.taskId, title, this.taskSummaryRepository.getSummary(node.value.taskId, this.now), this.taskNoteRepository.getNotes(node.value.taskId).latestNote, nest);
+      return new ManagedTask(node.value.taskId, title, this.taskSummaryRepository.getSummary(node.value.taskId, this.now), this.taskNoteRepository.getNotes(node.value.taskId).latestNote, nest, node.package.map(v => v.title));
     }
     else if (node.hasChildren) {
       return new NodeTask(title, node.children.map(v => this.treeNodeToTask(v, nestNum + 1)), nest);
     }
     else {
-      return new TitleOnlyTask(title, nest);
+      return new TitleOnlyTask(title, nest, node.package.map(v => v.title));
     }
   }
   private flat(task: NodeTask | TitleOnlyTask | ManagedTask, list: (NodeTask | TitleOnlyTask | ManagedTask)[] = []): Array<NodeTask | TitleOnlyTask | ManagedTask> {

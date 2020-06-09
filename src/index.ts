@@ -181,6 +181,7 @@ function setup(
           
           return obj;
         })
+        console.log(this.list);
         this.rootBody = taskTreeRepository.getTaskRootBody()
       },
       onPressedRootBodyEdit: function() {

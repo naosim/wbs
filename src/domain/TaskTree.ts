@@ -2,6 +2,7 @@ import { IssueRepository } from "./github/IssueRepository";
 import { TaskId } from "./TaskId";
 
 export class TreeNode<T> {
+  public package: T[] = [];
   constructor(readonly value: T, readonly children: TreeNode<T>[] = []) {}
   get hasChildren(): boolean {
     return this.children.length > 0;
@@ -11,6 +12,7 @@ export class TreeNode<T> {
     return this.children[this.children.length - 1];
   }
   addChild(node: TreeNode<T>) {
+    node.package = [...this.package, this.value]
     this.children.push(node);
   }
 }
