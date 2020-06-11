@@ -6,7 +6,7 @@ import {IssueRepositoryDummy} from './infra/github/IssueRepositoryDummy'
 import {CommentRepository} from './domain/github/CommentRepository'
 import {CommentRepositoryImpl} from './infra/github/CommentRepositoryImpl'
 import {CommentRepositoryDummy} from './infra/github/CommentRepositoryDummy'
-import { TaskSummaryRepository, TaskSummary, Milestones, Milestone, DateInTask } from './domain/TaskSummary'
+import { TaskSummaryRepository, TaskSummary, Milestones, Milestone, Links, DateInTask } from './domain/TaskSummary'
 import { TaskSummaryRepositoryImpl } from './infra/tasksummary/TaskSummaryImpl'
 import { TaskId } from './domain/TaskId'
 import { Note, Notes, TaskNoteRepository } from './domain/TaskNote'
@@ -34,7 +34,9 @@ type EditingText = {
   goal: string;
   isEditingGoal: boolean;
   completeDateText: string,
-  isEditingCompleteDateText
+  isEditingCompleteDateText: boolean,
+  linksText: string,
+  isEditingLinksText: boolean,
 }
 
 class Services {
@@ -180,6 +182,8 @@ function setup(
             isEditingGoal: false,
             completeDateText: v.summary.completeDate ? v.summary.completeDate.text : '',
             isEditingCompleteDateText: false,
+            linksText: v.summary.links.text,
+            isEditingLinksText: false,
           };
           obj.editingText = editingText;
           
@@ -212,7 +216,8 @@ function setup(
           .updateMilestones(MilestoneFactory.createMilestones(editingText.milestones, now))
           .updateAssign(editingText.assign)
           .updateGoal(editingText.goal)
-          .updateCompleteDate(DateInTask.create(editingText.completeDateText, editingText.isEditingCompleteDateText))
+          .updateCompleteDate(DateInTask.create(editingText.completeDateText, now))
+          .updateLinks(Links.create(editingText.linksText))
 
         taskSummaryRepository.update(
           summary, 

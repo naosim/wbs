@@ -72,6 +72,11 @@ export class TaskSummary implements TaskSummaryIF {
     result.completeDate = completeDate;
     return result;
   }
+  updateLinks(links: Links) {
+    var result = new TaskSummary(this);
+    result.links = links;
+    return result;
+  }
 }
 
 /*

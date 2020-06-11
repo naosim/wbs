@@ -549,6 +549,12 @@ function () {
     return result;
   };
 
+  TaskSummary.prototype.updateLinks = function (links) {
+    var result = new TaskSummary(this);
+    result.links = links;
+    return result;
+  };
+
   return TaskSummary;
 }();
 
@@ -1703,7 +1709,9 @@ function setup(taskSummaryRepository, taskNoteRepository, taskTreeRepository, no
             goal: v.summary.goal,
             isEditingGoal: false,
             completeDateText: v.summary.completeDate ? v.summary.completeDate.text : '',
-            isEditingCompleteDateText: false
+            isEditingCompleteDateText: false,
+            linksText: v.summary.links.text,
+            isEditingLinksText: false
           };
           obj.editingText = editingText;
           return obj;
@@ -1730,7 +1738,7 @@ function setup(taskSummaryRepository, taskNoteRepository, taskTreeRepository, no
       updateSummary: function updateSummary(obj) {
         console.log(obj);
         var editingText = obj.editingText;
-        var summary = taskSummaryRepository.getSummary(obj.taskId, now).updateMilestones(MilestoneFactory_1.MilestoneFactory.createMilestones(editingText.milestones, now)).updateAssign(editingText.assign).updateGoal(editingText.goal).updateCompleteDate(TaskSummary_1.DateInTask.create(editingText.completeDateText, editingText.isEditingCompleteDateText));
+        var summary = taskSummaryRepository.getSummary(obj.taskId, now).updateMilestones(MilestoneFactory_1.MilestoneFactory.createMilestones(editingText.milestones, now)).updateAssign(editingText.assign).updateGoal(editingText.goal).updateCompleteDate(TaskSummary_1.DateInTask.create(editingText.completeDateText, now)).updateLinks(TaskSummary_1.Links.create(editingText.linksText));
         taskSummaryRepository.update(summary, callbackToReload);
       }
     }
