@@ -33,6 +33,8 @@ type EditingText = {
   isEditingAssign: boolean;
   goal: string;
   isEditingGoal: boolean;
+  completeDateText: string,
+  isEditingCompleteDateText
 }
 
 class Services {
@@ -176,6 +178,8 @@ function setup(
             isEditingAssign: false,
             goal: v.summary.goal,
             isEditingGoal: false,
+            completeDateText: v.summary.completeDate ? v.summary.completeDate.text : '',
+            isEditingCompleteDateText: false,
           };
           obj.editingText = editingText;
           
@@ -208,6 +212,7 @@ function setup(
           .updateMilestones(MilestoneFactory.createMilestones(editingText.milestones, now))
           .updateAssign(editingText.assign)
           .updateGoal(editingText.goal)
+          .updateCompleteDate(DateInTask.create(editingText.completeDateText, editingText.isEditingCompleteDateText))
 
         taskSummaryRepository.update(
           summary, 

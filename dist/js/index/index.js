@@ -543,6 +543,12 @@ function () {
     return result;
   };
 
+  TaskSummary.prototype.updateCompleteDate = function (completeDate) {
+    var result = new TaskSummary(this);
+    result.completeDate = completeDate;
+    return result;
+  };
+
   return TaskSummary;
 }();
 
@@ -633,7 +639,8 @@ function () {
 
   DateInTask.prototype.isWithin = function (pastDate) {
     return this.date.getTime() <= pastDate.getTime();
-  };
+  }; // TODO: ドメイン層にあるべきでない
+
 
   DateInTask.create = function (dateText, now) {
     var parts = dateText.split('/').map(function (v) {
@@ -1451,6 +1458,8 @@ var CommentRepositoryImpl_1 = require("./infra/github/CommentRepositoryImpl");
 
 var CommentRepositoryDummy_1 = require("./infra/github/CommentRepositoryDummy");
 
+var TaskSummary_1 = require("./domain/TaskSummary");
+
 var TaskSummaryImpl_1 = require("./infra/tasksummary/TaskSummaryImpl");
 
 var TaskNoteRepositoryImpl_1 = require("./infra/tasknote/TaskNoteRepositoryImpl");
@@ -1631,7 +1640,9 @@ function setup(taskSummaryRepository, taskNoteRepository, taskTreeRepository, no
             assign: v.summary.assign,
             isEditingAssign: false,
             goal: v.summary.goal,
-            isEditingGoal: false
+            isEditingGoal: false,
+            completeDateText: v.summary.completeDate ? v.summary.completeDate.text : '',
+            isEditingCompleteDateText: false
           };
           obj.editingText = editingText;
           return obj;
@@ -1658,14 +1669,14 @@ function setup(taskSummaryRepository, taskNoteRepository, taskTreeRepository, no
       updateSummary: function updateSummary(obj) {
         console.log(obj);
         var editingText = obj.editingText;
-        var summary = taskSummaryRepository.getSummary(obj.taskId, now).updateMilestones(MilestoneFactory_1.MilestoneFactory.createMilestones(editingText.milestones, now)).updateAssign(editingText.assign).updateGoal(editingText.goal);
+        var summary = taskSummaryRepository.getSummary(obj.taskId, now).updateMilestones(MilestoneFactory_1.MilestoneFactory.createMilestones(editingText.milestones, now)).updateAssign(editingText.assign).updateGoal(editingText.goal).updateCompleteDate(TaskSummary_1.DateInTask.create(editingText.completeDateText, editingText.isEditingCompleteDateText));
         taskSummaryRepository.update(summary, callbackToReload);
       }
     }
   });
   app.reload();
 }
-},{"./infra/github/IssueRepositoryImpl":"infra/github/IssueRepositoryImpl.ts","./infra/github/IssueRepositoryDummy":"infra/github/IssueRepositoryDummy.ts","./infra/github/CommentRepositoryImpl":"infra/github/CommentRepositoryImpl.ts","./infra/github/CommentRepositoryDummy":"infra/github/CommentRepositoryDummy.ts","./infra/tasksummary/TaskSummaryImpl":"infra/tasksummary/TaskSummaryImpl.ts","./infra/tasknote/TaskNoteRepositoryImpl":"infra/tasknote/TaskNoteRepositoryImpl.ts","./domain/TaskTree":"domain/TaskTree.ts","./TaskListFactory":"TaskListFactory.ts","./service/TitleOnlyToMangedService":"service/TitleOnlyToMangedService.ts","./service/UpdateNoteBodyService":"service/UpdateNoteBodyService.ts","./service/CreateEmptyNoteService":"service/CreateEmptyNoteService.ts","./infra/tasksummary/MilestoneFactory":"infra/tasksummary/MilestoneFactory.ts"}],"../../../../../../usr/local/lib/node_modules/parcel/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./infra/github/IssueRepositoryImpl":"infra/github/IssueRepositoryImpl.ts","./infra/github/IssueRepositoryDummy":"infra/github/IssueRepositoryDummy.ts","./infra/github/CommentRepositoryImpl":"infra/github/CommentRepositoryImpl.ts","./infra/github/CommentRepositoryDummy":"infra/github/CommentRepositoryDummy.ts","./domain/TaskSummary":"domain/TaskSummary.ts","./infra/tasksummary/TaskSummaryImpl":"infra/tasksummary/TaskSummaryImpl.ts","./infra/tasknote/TaskNoteRepositoryImpl":"infra/tasknote/TaskNoteRepositoryImpl.ts","./domain/TaskTree":"domain/TaskTree.ts","./TaskListFactory":"TaskListFactory.ts","./service/TitleOnlyToMangedService":"service/TitleOnlyToMangedService.ts","./service/UpdateNoteBodyService":"service/UpdateNoteBodyService.ts","./service/CreateEmptyNoteService":"service/CreateEmptyNoteService.ts","./infra/tasksummary/MilestoneFactory":"infra/tasksummary/MilestoneFactory.ts"}],"../../../../../../usr/local/lib/node_modules/parcel/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;

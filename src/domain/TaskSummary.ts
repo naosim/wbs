@@ -67,6 +67,11 @@ export class TaskSummary implements TaskSummaryIF {
     result.goal = goal;
     return result;
   }
+  updateCompleteDate(completeDate: DateInTask) {
+    var result = new TaskSummary(this);
+    result.completeDate = completeDate;
+    return result;
+  }
 
 
 }
@@ -125,6 +130,7 @@ export class DateInTask {
   isWithin(pastDate: Date): boolean {
     return this.date.getTime() <= pastDate.getTime();
   }
+  // TODO: ドメイン層にあるべきでない
   static create(dateText: string, now: Date): DateInTask {
     var parts = dateText.split('/').map(v => parseInt(v));
     if(parts.length == 2) {// ex 6/23
