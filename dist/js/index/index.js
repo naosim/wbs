@@ -595,6 +595,11 @@ function () {
     enumerable: false,
     configurable: true
   });
+
+  Milestone.prototype.contains = function (text) {
+    return this.title.indexOf(text) != -1 || this.dateInTask.text.indexOf(text) != -1;
+  };
+
   return Milestone;
 }();
 
@@ -606,6 +611,12 @@ function () {
   function Milestones(list) {
     this.list = list;
   }
+
+  Milestones.prototype.contains = function (text) {
+    return this.list.some(function (v) {
+      return v.contains(text);
+    });
+  };
 
   return Milestones;
 }();
@@ -1565,19 +1576,18 @@ function setup(taskSummaryRepository, taskNoteRepository, taskTreeRepository, no
 
         console.log('decoratedList');
         var result = this.list;
-        var filterTargetsForSummary = ['担当', '内容', 'マイルストーン'];
         var fitlerTargetMap = {
           'title': function title(v) {
             return v.title.indexOf(_this.filter) != -1;
           },
           'assgin': function assgin(v) {
-            return v.isManaged && v.summary['担当'].indexOf(_this.filter) != -1;
+            return v.isManaged && v.summary.assign.indexOf(_this.filter) != -1;
           },
           'body': function body(v) {
-            return v.isManaged && v.summary['内容'].indexOf(_this.filter) != -1;
+            return v.isManaged && v.summary.description.indexOf(_this.filter) != -1;
           },
           'milestone': function milestone(v) {
-            return v.isManaged && v.summary['マイルストーン'].indexOf(_this.filter) != -1;
+            return v.isManaged && v.summary.milestones.contains(_this.filter);
           },
           'latestnote': function latestnote(v) {
             return v.isManaged && v.latestNoteText.indexOf(_this.filter) != -1;
@@ -1585,6 +1595,7 @@ function setup(taskSummaryRepository, taskNoteRepository, taskTreeRepository, no
         };
         result = result.map(function (v) {
           v.isHilight = false;
+          console.log(v.summary);
 
           if (_this.filter.trim().length == 0) {
             v.isHilight = false;

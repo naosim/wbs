@@ -136,18 +136,18 @@ function setup(
       decoratedList: function() {
         console.log('decoratedList');
         var result = this.list;
-        var filterTargetsForSummary = ['担当', '内容', 'マイルストーン'];
 
         var fitlerTargetMap = {
           'title': v => v.title.indexOf(this.filter) != -1,
-          'assgin': v => v.isManaged && v.summary['担当'].indexOf(this.filter) != -1,
-          'body': v => v.isManaged && v.summary['内容'].indexOf(this.filter) != -1,
-          'milestone': v => v.isManaged && v.summary['マイルストーン'].indexOf(this.filter) != -1,
+          'assgin': v => v.isManaged && v.summary.assign.indexOf(this.filter) != -1,
+          'body': v => v.isManaged && v.summary.description.indexOf(this.filter) != -1,
+          'milestone': v => v.isManaged && v.summary.milestones.contains(this.filter),
           'latestnote': v => v.isManaged && v.latestNoteText.indexOf(this.filter) != -1
         };
         
         result = result.map(v => {
           v.isHilight = false;
+          console.log(v.summary);
           if(this.filter.trim().length == 0) {
             v.isHilight = false;
           }else if(Object.keys(fitlerTargetMap).filter(key => this.filterCheckbox[key].checked).some(key => fitlerTargetMap[key](v))) {

@@ -104,10 +104,16 @@ export class Milestone {
   get isWithinOneWeek(): boolean {
     return this.isWithin(new Date(this.now.getTime() + 7 * 24 * 60 * 60 * 1000));
   }
+  contains(text: string): boolean {
+    return this.title.indexOf(text) != -1 || this.dateInTask.text.indexOf(text) != -1;
+  }
 }
 
 export class Milestones {
   constructor(readonly list: Milestone[]) {
+  }
+  contains(text: string): boolean {
+    return this.list.some(v => v.contains(text))
   }
 }
 
