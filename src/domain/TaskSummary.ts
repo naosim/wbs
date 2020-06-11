@@ -15,7 +15,7 @@ export interface TaskSummaryIF {
   endDate?: DateInTask;
   completeDate?: DateInTask;
   description: string;
-  links: {title: string, path: string, isHttp: boolean}[];
+  links: Links;
 }
 
 export class TaskSummary implements TaskSummaryIF {
@@ -33,7 +33,7 @@ export class TaskSummary implements TaskSummaryIF {
   endDate?: DateInTask;
   completeDate?: DateInTask;
   description: string;
-  links: {title: string, path: string, isHttp: boolean}[]
+  links: Links;
   constructor(org: TaskSummaryIF) {
     this.taskId = org.taskId;
     this.issueNumber = org.issueNumber;
@@ -72,8 +72,6 @@ export class TaskSummary implements TaskSummaryIF {
     result.completeDate = completeDate;
     return result;
   }
-
-
 }
 
 /*
@@ -138,6 +136,45 @@ export class DateInTask {
     }
     var date = new Date(parts.join('/'));
     return new DateInTask(dateText, date);
+  }
+}
+
+export class Link {
+  constructor(
+    readonly title: string, 
+    readonly path: string, 
+    readonly isHttp: boolean
+  ) {
+
+  }
+  get text(): string {
+    if(this.title == this.path) {
+      return this.title;
+    }
+
+    return `[${this.title}](${this.path})`
+  }
+  static create(v: string): Link {
+    if(v.indexOf('[') == -1) {
+      return new Link(v, v, false);
+    }
+    v = v.slice(v.indexOf('[') + 1);
+    var ary = v.split('](');
+    var title = ary[0];
+    var path = ary[1].slice(0, ary[1].length - 1);
+    return new Link(title, path, path.indexOf('http') == 0);
+  }
+}
+
+export class Links {
+  constructor(readonly list: Link[]) {}
+  get text(): string {
+    return this.list.map(v => `- ${v.text}`).join('\n')
+  }
+
+  static create(text: string) {
+    var list = text.split('\n').map(v => v.trim()).filter(v => v.length > 0).map(v => v.indexOf('- ') == 0 ? v.slice(2) : v).map(v => Link.create(v))
+    return new Links(list);
   }
 }
 

@@ -1,4 +1,4 @@
-import { TaskSummaryIF, TaskSummary, DateInTask, CreateTaskSummaryEvent, TaskSummaryRepository } from "../../domain/TaskSummary";
+import { TaskSummaryIF, TaskSummary, DateInTask, Links, CreateTaskSummaryEvent, TaskSummaryRepository } from "../../domain/TaskSummary";
 import { IssueRepository } from "../../domain/github/IssueRepository";
 import { TaskId } from "../../domain/TaskId";
 import { MilestoneFactory } from "./MilestoneFactory";
@@ -37,17 +37,18 @@ export class TaskSummaryRepositoryImpl implements TaskSummaryRepository {
     }, {})
 
     // md形式のリンクリストをパース
-    obj['リンク'] = obj['リンク'].split('\n').filter(v => v.length > 0).map(v => {
-      if(v.indexOf('[') == -1) {
-        return {title: v, path: v, isHttp: false};
-      }
-      v = v.slice(v.indexOf('[') + 1);
-      var ary = v.split('](');
-      var title = ary[0];
-      var path = ary[1].slice(0, ary[1].length - 1);
-      return {title: title, path: path, isHttp: path.indexOf('http') == 0};
-    })
-    obj.links = obj['リンク']
+    // obj['リンク'] = obj['リンク'].split('\n').filter(v => v.length > 0).map(v => {
+    //   if(v.indexOf('[') == -1) {
+    //     return {title: v, path: v, isHttp: false};
+    //   }
+    //   v = v.slice(v.indexOf('[') + 1);
+    //   var ary = v.split('](');
+    //   var title = ary[0];
+    //   var path = ary[1].slice(0, ary[1].length - 1);
+    //   return {title: title, path: path, isHttp: path.indexOf('http') == 0};
+    // })
+    obj.links = Links.create(obj['リンク'])
+    console.log(obj.links);
 
     obj.isDone = obj['完了'] && obj['完了'].trim().length > 0;
 
@@ -138,7 +139,7 @@ export class TaskSummaryRepositoryImpl implements TaskSummaryRepository {
       '開始日': summary.startDate ? summary.startDate.text : '',
       '終了日': summary.endDate ? summary.endDate.text : '',
       '内容': summary.description,
-      'リンク':summary.links.map(v => `- [${v.title}](${v.path})`).join('\n'),
+      'リンク':summary.links.text,
       '完了': summary.completeDate ? summary.completeDate.text : ''
     };
   }
