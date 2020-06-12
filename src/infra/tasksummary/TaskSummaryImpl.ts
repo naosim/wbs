@@ -1,18 +1,8 @@
-import { TaskSummaryIF, TaskSummary, DateInTask, Links, CreateTaskSummaryEvent, TaskSummaryRepository } from "../../domain/TaskSummary";
+import { TaskSummaryIF, TaskSummary, Links, CreateTaskSummaryEvent, TaskSummaryRepository } from "../../domain/TaskSummary";
 import { IssueRepository } from "../../domain/github/IssueRepository";
 import { TaskId } from "../../domain/TaskId";
 import { MilestoneFactory } from "./MilestoneFactory";
-export class DateInTaskFactory {
-  static create(dateText: string, now: Date): DateInTask {
-    var parts = dateText.split('/').map(v => parseInt(v));
-    if(parts.length == 2) {// ex 6/23
-      parts = [(parts[0] <= 3 ? now.getFullYear() + 1: now.getFullYear()), ...parts]
-    }
-    var date = new Date(parts.join('/'));
-    return new DateInTask(dateText, date);
-  }
-}
-
+import { DateInTaskFactory } from "./DateInTaskFactory";
 export class TaskSummaryRepositoryImpl implements TaskSummaryRepository {
   constructor(private issueRepository: IssueRepository) {
 }

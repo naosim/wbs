@@ -1,7 +1,7 @@
-import { NodeTask, TitleOnlyTask, ManagedTask } from './domain/task';
-import { TaskSummaryRepository } from './domain/TaskSummary';
-import { TaskNoteRepository } from './domain/TaskNote';
-import { TreeNode, TaskTitleAndId, TaskTreeRepository } from './domain/TaskTree';
+import { NodeTask, TitleOnlyTask, ManagedTask } from '../domain/task';
+import { TaskSummaryRepository } from '../domain/TaskSummary';
+import { TaskNoteRepository } from '../domain/TaskNote';
+import { TreeNode, TaskTitleAndId, TaskTreeRepository } from '../domain/TaskTree';
 
 export class TaskListFactory {
   constructor(private taskSummaryRepository: TaskSummaryRepository, private taskNoteRepository: TaskNoteRepository, private taskTreeRepository: TaskTreeRepository, private now: Date) { }
