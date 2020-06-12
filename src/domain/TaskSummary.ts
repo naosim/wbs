@@ -1,4 +1,5 @@
 import { TaskId } from "./TaskId";
+import { LinkFactory } from "../infra/text/markdown";
 
 export interface TaskSummaryIF {
   taskId: TaskId;
@@ -150,28 +151,14 @@ export class Link {
     }
 
     return `[${this.title}](${this.path})`
-  }
-  static create(v: string): Link {
-    if(v.indexOf('[') == -1) {
-      return new Link(v, v, false);
-    }
-    v = v.slice(v.indexOf('[') + 1);
-    var ary = v.split('](');
-    var title = ary[0];
-    var path = ary[1].slice(0, ary[1].length - 1);
-    return new Link(title, path, path.indexOf('http') == 0);
-  }
+  }  
 }
+
 
 export class Links {
   constructor(readonly list: Link[]) {}
   get text(): string {
     return this.list.map(v => `- ${v.text}`).join('\n')
-  }
-
-  static create(text: string) {
-    var list = text.split('\n').map(v => v.trim()).filter(v => v.length > 0).map(v => v.indexOf('- ') == 0 ? v.slice(2) : v).map(v => Link.create(v))
-    return new Links(list);
   }
 }
 

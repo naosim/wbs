@@ -2,7 +2,7 @@ import { TaskSummaryIF, TaskSummary, Links, CreateTaskSummaryEvent, TaskSummaryR
 import { IssueRepository } from "../../domain/github/IssueRepository";
 import { TaskId } from "../../domain/TaskId";
 import { MilestoneFactory } from "./MilestoneFactory";
-import { DateInTaskFactory } from "../text/markdown";
+import { DateInTaskFactory, LinksFactory } from "../text/markdown";
 export class TaskSummaryRepositoryImpl implements TaskSummaryRepository {
   constructor(private issueRepository: IssueRepository) {
 }
@@ -37,7 +37,7 @@ export class TaskSummaryRepositoryImpl implements TaskSummaryRepository {
     //   var path = ary[1].slice(0, ary[1].length - 1);
     //   return {title: title, path: path, isHttp: path.indexOf('http') == 0};
     // })
-    obj.links = Links.create(obj['リンク'])
+    obj.links = LinksFactory.create(obj['リンク'])
     console.log(obj.links);
 
     obj.isDone = obj['完了'] && obj['完了'].trim().length > 0;
