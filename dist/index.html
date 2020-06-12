@@ -211,9 +211,12 @@ td:first-child {
           -->
           
           <td><span v-html="br(value.summary.related)"></span></td>
-          <td><span>{{ value.summary.completeDate ? value.summary.completeDate.text : '' }}</span></td>
+          <td v-if="!value.editingText.isEditingCompleteDateText" style="cursor: pointer" v-on:click="value.editingText.isEditingCompleteDateText=true">{{ value.summary.completeDate ? value.summary.completeDate.text : '' }}</td>
+          <td v-if="value.editingText.isEditingCompleteDateText"><textarea v-model="value.editingText.completeDateText"></textarea><br><button v-on:click="value.editingText.completeDateText=new Date().toLocaleDateString()">今日</button><button v-on:click="updateSummary(value)">保存</button><button v-on:click="reload()">キャンセル</button></td>
           <td><span v-html="br(value.summary.description)"></span></td>
-          <td><span><p v-for="link in value.summary.links"><a v-bind:href="link.path" target="_blank">{{link.title}}</a></p></span></td>
+
+          <td v-if="!value.editingText.isEditingLinksText" style="cursor: pointer" v-on:click="value.editingText.isEditingLinksText=true"><p v-for="link in value.summary.links.list"><a v-bind:href="link.path" target="_blank">{{link.title}}</a></p></td>
+          <td v-if="value.editingText.isEditingLinksText"><textarea v-model="value.editingText.linksText"></textarea><br><button v-on:click="updateSummary(value)">保存</button><button v-on:click="reload()">キャンセル</button></td>
         </template>
         <template v-else>
           <td></td>

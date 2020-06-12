@@ -15,7 +15,7 @@ export interface TaskSummaryIF {
   endDate?: DateInTask;
   completeDate?: DateInTask;
   description: string;
-  links: {title: string, path: string, isHttp: boolean}[];
+  links: Links;
 }
 
 export class TaskSummary implements TaskSummaryIF {
@@ -33,7 +33,7 @@ export class TaskSummary implements TaskSummaryIF {
   endDate?: DateInTask;
   completeDate?: DateInTask;
   description: string;
-  links: {title: string, path: string, isHttp: boolean}[]
+  links: Links;
   constructor(org: TaskSummaryIF) {
     this.taskId = org.taskId;
     this.issueNumber = org.issueNumber;
@@ -67,8 +67,16 @@ export class TaskSummary implements TaskSummaryIF {
     result.goal = goal;
     return result;
   }
-
-
+  updateCompleteDate(completeDate: DateInTask) {
+    var result = new TaskSummary(this);
+    result.completeDate = completeDate;
+    return result;
+  }
+  updateLinks(links: Links) {
+    var result = new TaskSummary(this);
+    result.links = links;
+    return result;
+  }
 }
 
 /*
@@ -104,10 +112,16 @@ export class Milestone {
   get isWithinOneWeek(): boolean {
     return this.isWithin(new Date(this.now.getTime() + 7 * 24 * 60 * 60 * 1000));
   }
+  contains(text: string): boolean {
+    return this.title.indexOf(text) != -1 || this.dateInTask.text.indexOf(text) != -1;
+  }
 }
 
 export class Milestones {
   constructor(readonly list: Milestone[]) {
+  }
+  contains(text: string): boolean {
+    return this.list.some(v => v.contains(text))
   }
 }
 
@@ -119,6 +133,7 @@ export class DateInTask {
   isWithin(pastDate: Date): boolean {
     return this.date.getTime() <= pastDate.getTime();
   }
+  // TODO: ドメイン層にあるべきでない
   static create(dateText: string, now: Date): DateInTask {
     var parts = dateText.split('/').map(v => parseInt(v));
     if(parts.length == 2) {// ex 6/23
@@ -126,6 +141,45 @@ export class DateInTask {
     }
     var date = new Date(parts.join('/'));
     return new DateInTask(dateText, date);
+  }
+}
+
+export class Link {
+  constructor(
+    readonly title: string, 
+    readonly path: string, 
+    readonly isHttp: boolean
+  ) {
+
+  }
+  get text(): string {
+    if(this.title == this.path) {
+      return this.title;
+    }
+
+    return `[${this.title}](${this.path})`
+  }
+  static create(v: string): Link {
+    if(v.indexOf('[') == -1) {
+      return new Link(v, v, false);
+    }
+    v = v.slice(v.indexOf('[') + 1);
+    var ary = v.split('](');
+    var title = ary[0];
+    var path = ary[1].slice(0, ary[1].length - 1);
+    return new Link(title, path, path.indexOf('http') == 0);
+  }
+}
+
+export class Links {
+  constructor(readonly list: Link[]) {}
+  get text(): string {
+    return this.list.map(v => `- ${v.text}`).join('\n')
+  }
+
+  static create(text: string) {
+    var list = text.split('\n').map(v => v.trim()).filter(v => v.length > 0).map(v => v.indexOf('- ') == 0 ? v.slice(2) : v).map(v => Link.create(v))
+    return new Links(list);
   }
 }
 
