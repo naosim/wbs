@@ -9,6 +9,7 @@ import { UpdateNoteBodyService } from './service/UpdateNoteBodyService';
 import { CreateEmptyNoteService } from './service/CreateEmptyNoteService';
 import { MilestoneFactory } from './infra/tasksummary/MilestoneFactory';
 import { Services, Vue, config, EditingText } from './index';
+import { DateInTaskFactory } from './infra/text/markdown';
 export class View {
   static setup(taskSummaryRepository: TaskSummaryRepository, taskNoteRepository: TaskNoteRepository, taskTreeRepository: TaskTreeRepository, now: Date) {
     var taskListFactory = new TaskListFactory(taskSummaryRepository, taskNoteRepository, taskTreeRepository, now);
@@ -122,7 +123,7 @@ export class View {
             .updateMilestones(MilestoneFactory.createMilestones(editingText.milestones, now))
             .updateAssign(editingText.assign)
             .updateGoal(editingText.goal)
-            .updateCompleteDate(DateInTask.create(editingText.completeDateText, now))
+            .updateCompleteDate(DateInTaskFactory.create(editingText.completeDateText, now))
             .updateLinks(Links.create(editingText.linksText));
           taskSummaryRepository.update(summary, callbackToReload);
         }
