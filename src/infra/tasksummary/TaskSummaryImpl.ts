@@ -1,8 +1,8 @@
 import { TaskSummaryIF, TaskSummary, Links, CreateTaskSummaryEvent, TaskSummaryRepository } from "../../domain/TaskSummary";
 import { IssueRepository } from "../../domain/github/IssueRepository";
 import { TaskId } from "../../domain/TaskId";
-import { MilestoneFactory } from "./MilestoneFactory";
-import { DateInTaskFactory, LinksFactory } from "../text/markdown";
+
+import { DateInTaskFactory, LinksFactory, MilestoneFactory } from "../text/markdown";
 export class TaskSummaryRepositoryImpl implements TaskSummaryRepository {
   constructor(private issueRepository: IssueRepository) {
 }

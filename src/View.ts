@@ -7,25 +7,25 @@ import { TaskListFactory } from './service/TaskListFactory';
 import { TitleOnlyToMangedService } from './service/TitleOnlyToMangedService';
 import { UpdateNoteBodyService } from './service/UpdateNoteBodyService';
 import { CreateEmptyNoteService } from './service/CreateEmptyNoteService';
-import { MilestoneFactory } from './infra/tasksummary/MilestoneFactory';
+
 import { EditingText } from "./EditingText";
 import { Services } from "./Services";
-import { DateInTaskFactory, LinksFactory, ToMarkdown } from './infra/text/markdown';
+import { DateInTaskFactory, LinksFactory, ToMarkdown, MilestoneFactory } from './infra/text/markdown';
 import { Config } from './Config';
 declare var window;
 export class View {
   static setup(taskSummaryRepository: TaskSummaryRepository, taskNoteRepository: TaskNoteRepository, taskTreeRepository: TaskTreeRepository, now: Date, config: Config) {
     var taskListFactory = new TaskListFactory(taskSummaryRepository, taskNoteRepository, taskTreeRepository, now);
-    var tasks = taskListFactory.create().map(v => {
-      if (!v.isManaged) {
-        return v;
-      }
-      v = v as ManagedTask;
-      var obj = v as any; // vue用に変更
-      obj.editingMilestonesText = v.summary.milestones.list.map(v => `${v.dateText} ${v.title}`).join('\n');
-      (v as any).isEditingMilestones = false;
-      return obj;
-    });
+    // var tasks = taskListFactory.create().map(v => {
+    //   if (!v.isManaged) {
+    //     return v;
+    //   }
+    //   v = v as ManagedTask;
+    //   var obj = v as any; // vue用に変更
+    //   obj.editingMilestonesText = v.summary.milestones.list.map(v => `${v.dateText} ${v.title}`).join('\n');
+    //   (v as any).isEditingMilestones = false;
+    //   return obj;
+    // });
     var callbackToReload = (err?) => {
       if (err)
         throw err;

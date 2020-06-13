@@ -716,7 +716,7 @@ var __spreadArrays = this && this.__spreadArrays || function () {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.ToMarkdown = exports.LinksFactory = exports.LinkFactory = exports.DateInTaskFactory = void 0;
+exports.ToMarkdown = exports.LinksFactory = exports.LinkFactory = exports.MilestoneFactory = exports.DateInTaskFactory = void 0;
 
 var TaskSummary_1 = require("../../domain/TaskSummary");
 
@@ -743,6 +743,50 @@ function () {
 }();
 
 exports.DateInTaskFactory = DateInTaskFactory;
+
+var MilestoneFactory =
+/** @class */
+function () {
+  function MilestoneFactory() {} // パターン
+  // 2020/1/1 タスク名
+  // 2020/1/1　タスク名全角区切り
+  // 1/1 タスク名
+  // タスク名 ほげ
+  // 1/末 タスク名
+
+
+  MilestoneFactory.create = function (text, now) {
+    var splitKey = ' ';
+
+    if (text.indexOf(splitKey) == -1) {
+      splitKey = '　';
+
+      if (text.indexOf(splitKey) == -1) {
+        // throw `マイルストーンがパースできない ${text}`
+        var title = text;
+        return new TaskSummary_1.Milestone(new TaskSummary_1.DateInTask('', new Date('2999/12/31')), title, now);
+      }
+    }
+
+    var dateText = text.slice(0, text.indexOf(splitKey));
+    var title = text.slice(text.indexOf(splitKey)).trim();
+    return new TaskSummary_1.Milestone(DateInTaskFactory.create(dateText, now), title, now);
+  };
+
+  MilestoneFactory.createMilestones = function (text, now) {
+    return new TaskSummary_1.Milestones(text.split('\n').map(function (v) {
+      return v.trim();
+    }).filter(function (v) {
+      return v.length > 0;
+    }).map(function (v) {
+      return MilestoneFactory.create(v, now);
+    }));
+  };
+
+  return MilestoneFactory;
+}();
+
+exports.MilestoneFactory = MilestoneFactory;
 
 var LinkFactory =
 /** @class */
@@ -816,62 +860,7 @@ function () {
 }();
 
 exports.ToMarkdown = ToMarkdown;
-},{"../../domain/TaskSummary":"domain/TaskSummary.ts"}],"infra/tasksummary/MilestoneFactory.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.MilestoneFactory = void 0;
-
-var TaskSummary_1 = require("../../domain/TaskSummary");
-
-var markdown_1 = require("../text/markdown");
-
-var MilestoneFactory =
-/** @class */
-function () {
-  function MilestoneFactory() {} // パターン
-  // 2020/1/1 タスク名
-  // 2020/1/1　タスク名全角区切り
-  // 1/1 タスク名
-  // タスク名 ほげ
-  // 1/末 タスク名
-
-
-  MilestoneFactory.create = function (text, now) {
-    var splitKey = ' ';
-
-    if (text.indexOf(splitKey) == -1) {
-      splitKey = '　';
-
-      if (text.indexOf(splitKey) == -1) {
-        // throw `マイルストーンがパースできない ${text}`
-        var title = text;
-        return new TaskSummary_1.Milestone(new TaskSummary_1.DateInTask('', new Date('2999/12/31')), title, now);
-      }
-    }
-
-    var dateText = text.slice(0, text.indexOf(splitKey));
-    var title = text.slice(text.indexOf(splitKey)).trim();
-    return new TaskSummary_1.Milestone(markdown_1.DateInTaskFactory.create(dateText, now), title, now);
-  };
-
-  MilestoneFactory.createMilestones = function (text, now) {
-    return new TaskSummary_1.Milestones(text.split('\n').map(function (v) {
-      return v.trim();
-    }).filter(function (v) {
-      return v.length > 0;
-    }).map(function (v) {
-      return MilestoneFactory.create(v, now);
-    }));
-  };
-
-  return MilestoneFactory;
-}();
-
-exports.MilestoneFactory = MilestoneFactory;
-},{"../../domain/TaskSummary":"domain/TaskSummary.ts","../text/markdown":"infra/text/markdown.ts"}],"infra/tasksummary/TaskSummaryImpl.ts":[function(require,module,exports) {
+},{"../../domain/TaskSummary":"domain/TaskSummary.ts"}],"infra/tasksummary/TaskSummaryImpl.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -880,8 +869,6 @@ Object.defineProperty(exports, "__esModule", {
 exports.TaskSummaryRepositoryImpl = void 0;
 
 var TaskSummary_1 = require("../../domain/TaskSummary");
-
-var MilestoneFactory_1 = require("./MilestoneFactory");
 
 var markdown_1 = require("../text/markdown");
 
@@ -930,7 +917,7 @@ function () {
     obj.links = markdown_1.LinksFactory.create(obj['リンク']);
     console.log(obj.links);
     obj.isDone = obj['完了'] && obj['完了'].trim().length > 0;
-    obj.milestones = MilestoneFactory_1.MilestoneFactory.createMilestones(obj['マイルストーン'], now);
+    obj.milestones = markdown_1.MilestoneFactory.createMilestones(obj['マイルストーン'], now);
     /*
     milestones: Milestones,
     assign: string,
@@ -1021,7 +1008,7 @@ function () {
 }();
 
 exports.TaskSummaryRepositoryImpl = TaskSummaryRepositoryImpl;
-},{"../../domain/TaskSummary":"domain/TaskSummary.ts","./MilestoneFactory":"infra/tasksummary/MilestoneFactory.ts","../text/markdown":"infra/text/markdown.ts"}],"domain/TaskNote.ts":[function(require,module,exports) {
+},{"../../domain/TaskSummary":"domain/TaskSummary.ts","../text/markdown":"infra/text/markdown.ts"}],"domain/TaskNote.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1578,8 +1565,6 @@ var UpdateNoteBodyService_1 = require("./service/UpdateNoteBodyService");
 
 var CreateEmptyNoteService_1 = require("./service/CreateEmptyNoteService");
 
-var MilestoneFactory_1 = require("./infra/tasksummary/MilestoneFactory");
-
 var Services_1 = require("./Services");
 
 var markdown_1 = require("./infra/text/markdown");
@@ -1590,21 +1575,16 @@ function () {
   function View() {}
 
   View.setup = function (taskSummaryRepository, taskNoteRepository, taskTreeRepository, now, config) {
-    var taskListFactory = new TaskListFactory_1.TaskListFactory(taskSummaryRepository, taskNoteRepository, taskTreeRepository, now);
-    var tasks = taskListFactory.create().map(function (v) {
-      if (!v.isManaged) {
-        return v;
-      }
-
-      v = v;
-      var obj = v; // vue用に変更
-
-      obj.editingMilestonesText = v.summary.milestones.list.map(function (v) {
-        return v.dateText + " " + v.title;
-      }).join('\n');
-      v.isEditingMilestones = false;
-      return obj;
-    });
+    var taskListFactory = new TaskListFactory_1.TaskListFactory(taskSummaryRepository, taskNoteRepository, taskTreeRepository, now); // var tasks = taskListFactory.create().map(v => {
+    //   if (!v.isManaged) {
+    //     return v;
+    //   }
+    //   v = v as ManagedTask;
+    //   var obj = v as any; // vue用に変更
+    //   obj.editingMilestonesText = v.summary.milestones.list.map(v => `${v.dateText} ${v.title}`).join('\n');
+    //   (v as any).isEditingMilestones = false;
+    //   return obj;
+    // });
 
     var callbackToReload = function callbackToReload(err) {
       if (err) throw err;
@@ -1742,7 +1722,7 @@ function () {
         updateSummary: function updateSummary(obj) {
           console.log(obj);
           var editingText = obj.editingText;
-          var summary = taskSummaryRepository.getSummary(obj.taskId, now).updateMilestones(MilestoneFactory_1.MilestoneFactory.createMilestones(editingText.milestones, now)).updateAssign(editingText.assign).updateGoal(editingText.goal).updateCompleteDate(markdown_1.DateInTaskFactory.create(editingText.completeDateText, now)).updateLinks(markdown_1.LinksFactory.create(editingText.linksText));
+          var summary = taskSummaryRepository.getSummary(obj.taskId, now).updateMilestones(markdown_1.MilestoneFactory.createMilestones(editingText.milestones, now)).updateAssign(editingText.assign).updateGoal(editingText.goal).updateCompleteDate(markdown_1.DateInTaskFactory.create(editingText.completeDateText, now)).updateLinks(markdown_1.LinksFactory.create(editingText.linksText));
           taskSummaryRepository.update(summary, callbackToReload);
         }
       }
@@ -1754,7 +1734,7 @@ function () {
 }();
 
 exports.View = View;
-},{"./service/TaskListFactory":"service/TaskListFactory.ts","./service/TitleOnlyToMangedService":"service/TitleOnlyToMangedService.ts","./service/UpdateNoteBodyService":"service/UpdateNoteBodyService.ts","./service/CreateEmptyNoteService":"service/CreateEmptyNoteService.ts","./infra/tasksummary/MilestoneFactory":"infra/tasksummary/MilestoneFactory.ts","./Services":"Services.ts","./infra/text/markdown":"infra/text/markdown.ts"}],"index.ts":[function(require,module,exports) {
+},{"./service/TaskListFactory":"service/TaskListFactory.ts","./service/TitleOnlyToMangedService":"service/TitleOnlyToMangedService.ts","./service/UpdateNoteBodyService":"service/UpdateNoteBodyService.ts","./service/CreateEmptyNoteService":"service/CreateEmptyNoteService.ts","./Services":"Services.ts","./infra/text/markdown":"infra/text/markdown.ts"}],"index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
