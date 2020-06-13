@@ -8,10 +8,13 @@ import { TitleOnlyToMangedService } from './service/TitleOnlyToMangedService';
 import { UpdateNoteBodyService } from './service/UpdateNoteBodyService';
 import { CreateEmptyNoteService } from './service/CreateEmptyNoteService';
 import { MilestoneFactory } from './infra/tasksummary/MilestoneFactory';
-import { Services, Vue, config, EditingText } from './index';
-import { DateInTaskFactory, LinksFactory } from './infra/text/markdown';
+import { EditingText } from "./EditingText";
+import { Services } from "./Services";
+import { DateInTaskFactory, LinksFactory, ToMarkdown } from './infra/text/markdown';
+import { Config } from './Config';
+declare var window;
 export class View {
-  static setup(taskSummaryRepository: TaskSummaryRepository, taskNoteRepository: TaskNoteRepository, taskTreeRepository: TaskTreeRepository, now: Date) {
+  static setup(taskSummaryRepository: TaskSummaryRepository, taskNoteRepository: TaskNoteRepository, taskTreeRepository: TaskTreeRepository, now: Date, config: Config) {
     var taskListFactory = new TaskListFactory(taskSummaryRepository, taskNoteRepository, taskTreeRepository, now);
     var tasks = taskListFactory.create().map(v => {
       if (!v.isManaged) {
@@ -29,7 +32,7 @@ export class View {
       app.reload();
     };
     var services = new Services(new TitleOnlyToMangedService(taskSummaryRepository, taskTreeRepository), new UpdateNoteBodyService(taskNoteRepository), new CreateEmptyNoteService(taskNoteRepository, now));
-    var app = new Vue({
+    var app = new window.Vue({
       el: '#app',
       data: {
         message: 'Hello Vue!',
@@ -45,7 +48,8 @@ export class View {
           'body': { label: '内容', checked: true },
           'milestone': { label: 'マイルストーン', checked: true },
           'latestnote': { label: '最新状況', checked: true }
-        }
+        },
+        toMarkdown: new ToMarkdown(),
       },
       computed: {
         decoratedList: function () {

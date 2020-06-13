@@ -27,10 +27,26 @@ export class LinkFactory {
   }
 }
 
-
 export class LinksFactory {
   static create(text: string) {
     var list = text.split('\n').map(v => v.trim()).filter(v => v.length > 0).map(v => v.indexOf('- ') == 0 ? v.slice(2) : v).map(v => LinkFactory.create(v))
     return new Links(list);
+  }
+}
+
+export class ToMarkdown {
+  forLink(link: Link): string {
+    if(link.title == link.path) {
+      return link.title;
+    }
+
+    return `[${link.title}](${link.path})`
+  }
+  forLinks(links: Links): string {
+    return links.list.map(v => `- ${v.text}`).join('\n')
+  }
+
+  forDateInTask(dateInTask: DateInTask) {
+    return dateInTask.text; // あんまり意味がないけど、今後のためにラップしておく
   }
 }

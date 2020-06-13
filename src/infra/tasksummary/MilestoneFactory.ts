@@ -1,4 +1,5 @@
 import { DateInTask, Milestone, Milestones } from "../../domain/TaskSummary";
+import { DateInTaskFactory } from "../text/markdown";
 export class MilestoneFactory {
   // パターン
   // 2020/1/1 タスク名
@@ -18,7 +19,7 @@ export class MilestoneFactory {
     }
     var dateText = text.slice(0, text.indexOf(splitKey));
     var title = text.slice(text.indexOf(splitKey)).trim();
-    return new Milestone(DateInTask.create(dateText, now), title, now);
+    return new Milestone(DateInTaskFactory.create(dateText, now), title, now);
   }
   static createMilestones(text: string, now: Date): Milestones {
     return new Milestones(text.split('\n').map(v => v.trim()).filter(v => v.length > 0).map(v => MilestoneFactory.create(v, now)));

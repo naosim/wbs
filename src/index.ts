@@ -11,44 +11,14 @@ import { TaskSummaryRepositoryImpl } from './infra/tasksummary/TaskSummaryImpl'
 import { Notes, TaskNoteRepository } from './domain/TaskNote'
 import { TaskNoteRepositoryImpl } from './infra/tasknote/TaskNoteRepositoryImpl'
 import { TaskTreeRepository } from './domain/TaskTree'
-import { TitleOnlyToMangedService } from './service/TitleOnlyToMangedService'
-import { UpdateNoteBodyService } from './service/UpdateNoteBodyService'
-import { CreateEmptyNoteService } from './service/CreateEmptyNoteService'
 import { View } from './View'
-export declare var Vue: any;
-export declare var config: { 
-  githubToken: string, 
-  owner: string, 
-  repo: string,
-  taskRootIssueNumber: number ,
-  isDevelop:boolean
-}
-
-export type EditingText = {
-  milestones: string;
-  isEditingMilestones: boolean;
-  assign: string;
-  isEditingAssign: boolean;
-  goal: string;
-  isEditingGoal: boolean;
-  completeDateText: string,
-  isEditingCompleteDateText: boolean,
-  linksText: string,
-  isEditingLinksText: boolean,
-}
-
-export class Services {
-  constructor(
-    readonly titleOnlyToMangedService: TitleOnlyToMangedService,
-    readonly updateNoteBodyService: UpdateNoteBodyService,
-    readonly createEmptyNoteService: CreateEmptyNoteService
-  ) {}
-}
-
+import { Config } from './Config'
+declare var window;
 
 (() => {
   var issueRepository: IssueRepository;
   var commentRepository: CommentRepository;
+  var config = window.config as Config
   
   issueRepository = new IssueRepositoryImpl(
     config.githubToken,
@@ -83,7 +53,10 @@ export class Services {
         taskSummaryRepository, 
         taskNoteRepository, 
         taskTreeRepository,
-        new Date());
+        new Date(),
+        config
+      );
+        
     });
   })
 })()
