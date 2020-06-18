@@ -78,6 +78,11 @@ export class TaskSummary implements TaskSummaryIF {
     result.links = links;
     return result;
   }
+  updateDescription(description: string) {
+    var result = new TaskSummary(this);
+    result.description = description;
+    return result;
+  }
 }
 
 /*

@@ -96,6 +96,8 @@ export class View {
               isEditingCompleteDateText: false,
               linksText: v.summary.links.text,
               isEditingLinksText: false,
+              description: v.summary.description,
+              isEditingDescription: false,
             };
             obj.editingText = editingText;
             return obj;
@@ -128,7 +130,8 @@ export class View {
             .updateAssign(editingText.assign)
             .updateGoal(editingText.goal)
             .updateCompleteDate(DateInTaskFactory.create(editingText.completeDateText, now))
-            .updateLinks(LinksFactory.create(editingText.linksText));
+            .updateLinks(LinksFactory.create(editingText.linksText))
+            .updateDescription(editingText.description);
           taskSummaryRepository.update(summary, callbackToReload);
         }
       }

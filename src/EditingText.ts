@@ -9,4 +9,6 @@ export type EditingText = {
   isEditingCompleteDateText: boolean;
   linksText: string;
   isEditingLinksText: boolean;
+  description: string;
+  isEditingDescription: boolean;
 };

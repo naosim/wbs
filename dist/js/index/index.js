@@ -541,6 +541,12 @@ function () {
     return result;
   };
 
+  TaskSummary.prototype.updateDescription = function (description) {
+    var result = new TaskSummary(this);
+    result.description = description;
+    return result;
+  };
+
   return TaskSummary;
 }();
 
@@ -1695,7 +1701,9 @@ function () {
               completeDateText: v.summary.completeDate ? v.summary.completeDate.text : '',
               isEditingCompleteDateText: false,
               linksText: v.summary.links.text,
-              isEditingLinksText: false
+              isEditingLinksText: false,
+              description: v.summary.description,
+              isEditingDescription: false
             };
             obj.editingText = editingText;
             return obj;
@@ -1722,7 +1730,7 @@ function () {
         updateSummary: function updateSummary(obj) {
           console.log(obj);
           var editingText = obj.editingText;
-          var summary = taskSummaryRepository.getSummary(obj.taskId, now).updateMilestones(markdown_1.MilestoneFactory.createMilestones(editingText.milestones, now)).updateAssign(editingText.assign).updateGoal(editingText.goal).updateCompleteDate(markdown_1.DateInTaskFactory.create(editingText.completeDateText, now)).updateLinks(markdown_1.LinksFactory.create(editingText.linksText));
+          var summary = taskSummaryRepository.getSummary(obj.taskId, now).updateMilestones(markdown_1.MilestoneFactory.createMilestones(editingText.milestones, now)).updateAssign(editingText.assign).updateGoal(editingText.goal).updateCompleteDate(markdown_1.DateInTaskFactory.create(editingText.completeDateText, now)).updateLinks(markdown_1.LinksFactory.create(editingText.linksText)).updateDescription(editingText.description);
           taskSummaryRepository.update(summary, callbackToReload);
         }
       }
@@ -1816,7 +1824,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51889" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61653" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
