@@ -485,20 +485,6 @@ exports.CommentRepositoryDummy = CommentRepositoryDummy;
 },{}],"domain/TaskSummary.ts":[function(require,module,exports) {
 "use strict";
 
-var __spreadArrays = this && this.__spreadArrays || function () {
-  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
-    s += arguments[i].length;
-  }
-
-  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
-    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
-      r[k] = a[j];
-    }
-  }
-
-  return r;
-};
-
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -552,6 +538,12 @@ function () {
   TaskSummary.prototype.updateLinks = function (links) {
     var result = new TaskSummary(this);
     result.links = links;
+    return result;
+  };
+
+  TaskSummary.prototype.updateDescription = function (description) {
+    var result = new TaskSummary(this);
+    result.description = description;
     return result;
   };
 
@@ -645,21 +637,6 @@ function () {
 
   DateInTask.prototype.isWithin = function (pastDate) {
     return this.date.getTime() <= pastDate.getTime();
-  }; // TODO: ドメイン層にあるべきでない
-
-
-  DateInTask.create = function (dateText, now) {
-    var parts = dateText.split('/').map(function (v) {
-      return parseInt(v);
-    });
-
-    if (parts.length == 2) {
-      // ex 6/23
-      parts = __spreadArrays([parts[0] <= 3 ? now.getFullYear() + 1 : now.getFullYear()], parts);
-    }
-
-    var date = new Date(parts.join('/'));
-    return new DateInTask(dateText, date);
   };
 
   return DateInTask;
@@ -687,19 +664,6 @@ function () {
     enumerable: false,
     configurable: true
   });
-
-  Link.create = function (v) {
-    if (v.indexOf('[') == -1) {
-      return new Link(v, v, false);
-    }
-
-    v = v.slice(v.indexOf('[') + 1);
-    var ary = v.split('](');
-    var title = ary[0];
-    var path = ary[1].slice(0, ary[1].length - 1);
-    return new Link(title, path, path.indexOf('http') == 0);
-  };
-
   return Link;
 }();
 
@@ -721,20 +685,6 @@ function () {
     enumerable: false,
     configurable: true
   });
-
-  Links.create = function (text) {
-    var list = text.split('\n').map(function (v) {
-      return v.trim();
-    }).filter(function (v) {
-      return v.length > 0;
-    }).map(function (v) {
-      return v.indexOf('- ') == 0 ? v.slice(2) : v;
-    }).map(function (v) {
-      return Link.create(v);
-    });
-    return new Links(list);
-  };
-
   return Links;
 }();
 
@@ -751,15 +701,54 @@ function () {
 }();
 
 exports.CreateTaskSummaryEvent = CreateTaskSummaryEvent;
-},{}],"infra/tasksummary/MilestoneFactory.ts":[function(require,module,exports) {
-"use strict";
+},{}],"infra/text/markdown.ts":[function(require,module,exports) {
+"use strict"; // このシステムでは、テキストをmarkdownのようなフォーマットで記述する
+// このテキストと値オブジェクトとの変換クラスをここに実装する
+
+var __spreadArrays = this && this.__spreadArrays || function () {
+  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
+    s += arguments[i].length;
+  }
+
+  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
+    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
+      r[k] = a[j];
+    }
+  }
+
+  return r;
+};
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.MilestoneFactory = void 0;
+exports.ToMarkdown = exports.LinksFactory = exports.LinkFactory = exports.MilestoneFactory = exports.DateInTaskFactory = void 0;
 
 var TaskSummary_1 = require("../../domain/TaskSummary");
+
+var DateInTaskFactory =
+/** @class */
+function () {
+  function DateInTaskFactory() {}
+
+  DateInTaskFactory.create = function (dateText, now) {
+    var parts = dateText.split('/').map(function (v) {
+      return parseInt(v);
+    });
+
+    if (parts.length == 2) {
+      // ex 6/23
+      parts = __spreadArrays([parts[0] <= 3 ? now.getFullYear() + 1 : now.getFullYear()], parts);
+    }
+
+    var date = new Date(parts.join('/'));
+    return new TaskSummary_1.DateInTask(dateText, date);
+  };
+
+  return DateInTaskFactory;
+}();
+
+exports.DateInTaskFactory = DateInTaskFactory;
 
 var MilestoneFactory =
 /** @class */
@@ -787,7 +776,7 @@ function () {
 
     var dateText = text.slice(0, text.indexOf(splitKey));
     var title = text.slice(text.indexOf(splitKey)).trim();
-    return new TaskSummary_1.Milestone(TaskSummary_1.DateInTask.create(dateText, now), title, now);
+    return new TaskSummary_1.Milestone(DateInTaskFactory.create(dateText, now), title, now);
   };
 
   MilestoneFactory.createMilestones = function (text, now) {
@@ -804,55 +793,90 @@ function () {
 }();
 
 exports.MilestoneFactory = MilestoneFactory;
+
+var LinkFactory =
+/** @class */
+function () {
+  function LinkFactory() {}
+
+  LinkFactory.create = function (v) {
+    if (v.indexOf('[') == -1) {
+      return new TaskSummary_1.Link(v, v, false);
+    }
+
+    v = v.slice(v.indexOf('[') + 1);
+    var ary = v.split('](');
+    var title = ary[0];
+    var path = ary[1].slice(0, ary[1].length - 1);
+    return new TaskSummary_1.Link(title, path, path.indexOf('http') == 0);
+  };
+
+  return LinkFactory;
+}();
+
+exports.LinkFactory = LinkFactory;
+
+var LinksFactory =
+/** @class */
+function () {
+  function LinksFactory() {}
+
+  LinksFactory.create = function (text) {
+    var list = text.split('\n').map(function (v) {
+      return v.trim();
+    }).filter(function (v) {
+      return v.length > 0;
+    }).map(function (v) {
+      return v.indexOf('- ') == 0 ? v.slice(2) : v;
+    }).map(function (v) {
+      return LinkFactory.create(v);
+    });
+    return new TaskSummary_1.Links(list);
+  };
+
+  return LinksFactory;
+}();
+
+exports.LinksFactory = LinksFactory;
+
+var ToMarkdown =
+/** @class */
+function () {
+  function ToMarkdown() {}
+
+  ToMarkdown.prototype.forLink = function (link) {
+    if (link.title == link.path) {
+      return link.title;
+    }
+
+    return "[" + link.title + "](" + link.path + ")";
+  };
+
+  ToMarkdown.prototype.forLinks = function (links) {
+    return links.list.map(function (v) {
+      return "- " + v.text;
+    }).join('\n');
+  };
+
+  ToMarkdown.prototype.forDateInTask = function (dateInTask) {
+    return dateInTask.text; // あんまり意味がないけど、今後のためにラップしておく
+  };
+
+  return ToMarkdown;
+}();
+
+exports.ToMarkdown = ToMarkdown;
 },{"../../domain/TaskSummary":"domain/TaskSummary.ts"}],"infra/tasksummary/TaskSummaryImpl.ts":[function(require,module,exports) {
 "use strict";
-
-var __spreadArrays = this && this.__spreadArrays || function () {
-  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
-    s += arguments[i].length;
-  }
-
-  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
-    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
-      r[k] = a[j];
-    }
-  }
-
-  return r;
-};
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.TaskSummaryRepositoryImpl = exports.DateInTaskFactory = void 0;
+exports.TaskSummaryRepositoryImpl = void 0;
 
 var TaskSummary_1 = require("../../domain/TaskSummary");
 
-var MilestoneFactory_1 = require("./MilestoneFactory");
-
-var DateInTaskFactory =
-/** @class */
-function () {
-  function DateInTaskFactory() {}
-
-  DateInTaskFactory.create = function (dateText, now) {
-    var parts = dateText.split('/').map(function (v) {
-      return parseInt(v);
-    });
-
-    if (parts.length == 2) {
-      // ex 6/23
-      parts = __spreadArrays([parts[0] <= 3 ? now.getFullYear() + 1 : now.getFullYear()], parts);
-    }
-
-    var date = new Date(parts.join('/'));
-    return new TaskSummary_1.DateInTask(dateText, date);
-  };
-
-  return DateInTaskFactory;
-}();
-
-exports.DateInTaskFactory = DateInTaskFactory;
+var markdown_1 = require("../text/markdown");
 
 var TaskSummaryRepositoryImpl =
 /** @class */
@@ -896,10 +920,10 @@ function () {
     //   return {title: title, path: path, isHttp: path.indexOf('http') == 0};
     // })
 
-    obj.links = TaskSummary_1.Links.create(obj['リンク']);
+    obj.links = markdown_1.LinksFactory.create(obj['リンク']);
     console.log(obj.links);
     obj.isDone = obj['完了'] && obj['完了'].trim().length > 0;
-    obj.milestones = MilestoneFactory_1.MilestoneFactory.createMilestones(obj['マイルストーン'], now);
+    obj.milestones = markdown_1.MilestoneFactory.createMilestones(obj['マイルストーン'], now);
     /*
     milestones: Milestones,
     assign: string,
@@ -915,9 +939,9 @@ function () {
     obj.related = obj['関係者'];
     obj.goal = obj['DONEの定義'];
     obj.description = obj['内容'];
-    obj.startDate = obj['開始日'].length > 0 ? DateInTaskFactory.create(obj['開始日'], now) : null;
-    obj.endDate = obj['終了日'].length > 0 ? DateInTaskFactory.create(obj['終了日'], now) : null;
-    obj.completeDate = obj['完了'] && obj['完了'].length > 0 ? DateInTaskFactory.create(obj['完了'], now) : null; // issue番号
+    obj.startDate = obj['開始日'].length > 0 ? markdown_1.DateInTaskFactory.create(obj['開始日'], now) : null;
+    obj.endDate = obj['終了日'].length > 0 ? markdown_1.DateInTaskFactory.create(obj['終了日'], now) : null;
+    obj.completeDate = obj['完了'] && obj['完了'].length > 0 ? markdown_1.DateInTaskFactory.create(obj['完了'], now) : null; // issue番号
 
     obj.issueNumber = issue.number || taskId;
     obj.taskId = issue.number || taskId;
@@ -990,7 +1014,7 @@ function () {
 }();
 
 exports.TaskSummaryRepositoryImpl = TaskSummaryRepositoryImpl;
-},{"../../domain/TaskSummary":"domain/TaskSummary.ts","./MilestoneFactory":"infra/tasksummary/MilestoneFactory.ts"}],"domain/TaskNote.ts":[function(require,module,exports) {
+},{"../../domain/TaskSummary":"domain/TaskSummary.ts","../text/markdown":"infra/text/markdown.ts"}],"domain/TaskNote.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1352,7 +1376,7 @@ function () {
 }();
 
 exports.ManagedTask = ManagedTask;
-},{"./TaskSummary":"domain/TaskSummary.ts"}],"TaskListFactory.ts":[function(require,module,exports) {
+},{"./TaskSummary":"domain/TaskSummary.ts"}],"service/TaskListFactory.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1360,7 +1384,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.TaskListFactory = void 0;
 
-var task_1 = require("./domain/task");
+var task_1 = require("../domain/task");
 
 var TaskListFactory =
 /** @class */
@@ -1425,7 +1449,7 @@ function () {
 }();
 
 exports.TaskListFactory = TaskListFactory;
-},{"./domain/task":"domain/task.ts"}],"service/TitleOnlyToMangedService.ts":[function(require,module,exports) {
+},{"../domain/task":"domain/task.ts"}],"service/TitleOnlyToMangedService.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1510,7 +1534,215 @@ function () {
 }();
 
 exports.CreateEmptyNoteService = CreateEmptyNoteService;
-},{}],"index.ts":[function(require,module,exports) {
+},{}],"Services.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Services = void 0;
+
+var Services =
+/** @class */
+function () {
+  function Services(titleOnlyToMangedService, updateNoteBodyService, createEmptyNoteService) {
+    this.titleOnlyToMangedService = titleOnlyToMangedService;
+    this.updateNoteBodyService = updateNoteBodyService;
+    this.createEmptyNoteService = createEmptyNoteService;
+  }
+
+  return Services;
+}();
+
+exports.Services = Services;
+},{}],"View.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.View = void 0;
+
+var TaskListFactory_1 = require("./service/TaskListFactory");
+
+var TitleOnlyToMangedService_1 = require("./service/TitleOnlyToMangedService");
+
+var UpdateNoteBodyService_1 = require("./service/UpdateNoteBodyService");
+
+var CreateEmptyNoteService_1 = require("./service/CreateEmptyNoteService");
+
+var Services_1 = require("./Services");
+
+var markdown_1 = require("./infra/text/markdown");
+
+var View =
+/** @class */
+function () {
+  function View() {}
+
+  View.setup = function (taskSummaryRepository, taskNoteRepository, taskTreeRepository, now, config) {
+    var taskListFactory = new TaskListFactory_1.TaskListFactory(taskSummaryRepository, taskNoteRepository, taskTreeRepository, now); // var tasks = taskListFactory.create().map(v => {
+    //   if (!v.isManaged) {
+    //     return v;
+    //   }
+    //   v = v as ManagedTask;
+    //   var obj = v as any; // vue用に変更
+    //   obj.editingMilestonesText = v.summary.milestones.list.map(v => `${v.dateText} ${v.title}`).join('\n');
+    //   (v as any).isEditingMilestones = false;
+    //   return obj;
+    // });
+
+    var callbackToReload = function callbackToReload(err) {
+      if (err) throw err;
+      app.reload();
+    };
+
+    var services = new Services_1.Services(new TitleOnlyToMangedService_1.TitleOnlyToMangedService(taskSummaryRepository, taskTreeRepository), new UpdateNoteBodyService_1.UpdateNoteBodyService(taskNoteRepository), new CreateEmptyNoteService_1.CreateEmptyNoteService(taskNoteRepository, now));
+    var app = new window.Vue({
+      el: '#app',
+      data: {
+        message: 'Hello Vue!',
+        list: []
+        /*tasks*/
+        ,
+        rootBody: ''
+        /*taskTreeRepository.getTaskRootBody()*/
+        ,
+        filter: '',
+        owner: config.owner,
+        repo: config.repo,
+        issueUrlPrefix: "https://github.com/" + config.owner + "/" + config.repo + "/issues",
+        filterCheckbox: {
+          'title': {
+            label: '件名',
+            checked: true
+          },
+          'assgin': {
+            label: '担当',
+            checked: true
+          },
+          'body': {
+            label: '内容',
+            checked: true
+          },
+          'milestone': {
+            label: 'マイルストーン',
+            checked: true
+          },
+          'latestnote': {
+            label: '最新状況',
+            checked: true
+          }
+        },
+        toMarkdown: new markdown_1.ToMarkdown()
+      },
+      computed: {
+        decoratedList: function decoratedList() {
+          var _this = this;
+
+          console.log('decoratedList');
+          var result = this.list;
+          var fitlerTargetMap = {
+            'title': function title(v) {
+              return v.title.indexOf(_this.filter) != -1;
+            },
+            'assgin': function assgin(v) {
+              return v.isManaged && v.summary.assign.indexOf(_this.filter) != -1;
+            },
+            'body': function body(v) {
+              return v.isManaged && v.summary.description.indexOf(_this.filter) != -1;
+            },
+            'milestone': function milestone(v) {
+              return v.isManaged && v.summary.milestones.contains(_this.filter);
+            },
+            'latestnote': function latestnote(v) {
+              return v.isManaged && v.latestNoteText.indexOf(_this.filter) != -1;
+            }
+          };
+          result = result.map(function (v) {
+            v.isHilight = false;
+            console.log(v.summary);
+
+            if (_this.filter.trim().length == 0) {
+              v.isHilight = false;
+            } else if (Object.keys(fitlerTargetMap).filter(function (key) {
+              return _this.filterCheckbox[key].checked;
+            }).some(function (key) {
+              return fitlerTargetMap[key](v);
+            })) {
+              v.isHilight = true;
+            }
+
+            v.isEditingMilestones = false;
+            return v;
+          });
+          return result;
+        }
+      },
+      methods: {
+        reload: function reload() {
+          this.list = taskListFactory.create().map(function (v) {
+            if (!v.isManaged) {
+              return v;
+            }
+
+            v = v;
+            var obj = v; // vue用に変更
+
+            var editingText = {
+              milestones: v.summary.milestones.list.map(function (v) {
+                return v.dateText + " " + v.title;
+              }).join('\n'),
+              isEditingMilestones: false,
+              assign: v.summary.assign,
+              isEditingAssign: false,
+              goal: v.summary.goal,
+              isEditingGoal: false,
+              completeDateText: v.summary.completeDate ? v.summary.completeDate.text : '',
+              isEditingCompleteDateText: false,
+              linksText: v.summary.links.text,
+              isEditingLinksText: false,
+              description: v.summary.description,
+              isEditingDescription: false
+            };
+            obj.editingText = editingText;
+            return obj;
+          });
+          console.log(this.list);
+          this.rootBody = taskTreeRepository.getTaskRootBody();
+        },
+        onPressedRootBodyEdit: function onPressedRootBodyEdit() {
+          taskTreeRepository.updateTaskRootBody(this.rootBody, callbackToReload);
+        },
+        br: function br(text) {
+          return text.split('\n').join('<br>');
+        },
+        createTask: function createTask(titleOnlyTask) {
+          services.titleOnlyToMangedService.convert(titleOnlyTask, callbackToReload);
+        },
+        editNote: function editNote(note, selector) {
+          var body = document.querySelector(selector).value.trim();
+          services.updateNoteBodyService.update(note, body, callbackToReload);
+        },
+        createNote: function createNote(taskId) {
+          services.createEmptyNoteService.create(taskId, callbackToReload);
+        },
+        updateSummary: function updateSummary(obj) {
+          console.log(obj);
+          var editingText = obj.editingText;
+          var summary = taskSummaryRepository.getSummary(obj.taskId, now).updateMilestones(markdown_1.MilestoneFactory.createMilestones(editingText.milestones, now)).updateAssign(editingText.assign).updateGoal(editingText.goal).updateCompleteDate(markdown_1.DateInTaskFactory.create(editingText.completeDateText, now)).updateLinks(markdown_1.LinksFactory.create(editingText.linksText)).updateDescription(editingText.description);
+          taskSummaryRepository.update(summary, callbackToReload);
+        }
+      }
+    });
+    app.reload();
+  };
+
+  return View;
+}();
+
+exports.View = View;
+},{"./service/TaskListFactory":"service/TaskListFactory.ts","./service/TitleOnlyToMangedService":"service/TitleOnlyToMangedService.ts","./service/UpdateNoteBodyService":"service/UpdateNoteBodyService.ts","./service/CreateEmptyNoteService":"service/CreateEmptyNoteService.ts","./Services":"Services.ts","./infra/text/markdown":"infra/text/markdown.ts"}],"index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1525,39 +1757,18 @@ var CommentRepositoryImpl_1 = require("./infra/github/CommentRepositoryImpl");
 
 var CommentRepositoryDummy_1 = require("./infra/github/CommentRepositoryDummy");
 
-var TaskSummary_1 = require("./domain/TaskSummary");
-
 var TaskSummaryImpl_1 = require("./infra/tasksummary/TaskSummaryImpl");
 
 var TaskNoteRepositoryImpl_1 = require("./infra/tasknote/TaskNoteRepositoryImpl");
 
 var TaskTree_1 = require("./domain/TaskTree");
 
-var TaskListFactory_1 = require("./TaskListFactory");
-
-var TitleOnlyToMangedService_1 = require("./service/TitleOnlyToMangedService");
-
-var UpdateNoteBodyService_1 = require("./service/UpdateNoteBodyService");
-
-var CreateEmptyNoteService_1 = require("./service/CreateEmptyNoteService");
-
-var MilestoneFactory_1 = require("./infra/tasksummary/MilestoneFactory");
-
-var Services =
-/** @class */
-function () {
-  function Services(titleOnlyToMangedService, updateNoteBodyService, createEmptyNoteService) {
-    this.titleOnlyToMangedService = titleOnlyToMangedService;
-    this.updateNoteBodyService = updateNoteBodyService;
-    this.createEmptyNoteService = createEmptyNoteService;
-  }
-
-  return Services;
-}();
+var View_1 = require("./View");
 
 (function () {
   var issueRepository;
   var commentRepository;
+  var config = window.config;
   issueRepository = new IssueRepositoryImpl_1.IssueRepositoryImpl(config.githubToken, config.owner, config.repo);
   commentRepository = new CommentRepositoryImpl_1.CommentRepositoryImpl(config.githubToken, config.owner, config.repo);
 
@@ -1581,171 +1792,11 @@ function () {
         throw err;
       }
 
-      setup(taskSummaryRepository, taskNoteRepository, taskTreeRepository, new Date());
+      View_1.View.setup(taskSummaryRepository, taskNoteRepository, taskTreeRepository, new Date(), config);
     });
   });
 })();
-
-function setup(taskSummaryRepository, taskNoteRepository, taskTreeRepository, now) {
-  var taskListFactory = new TaskListFactory_1.TaskListFactory(taskSummaryRepository, taskNoteRepository, taskTreeRepository, now);
-  var tasks = taskListFactory.create().map(function (v) {
-    if (!v.isManaged) {
-      return v;
-    }
-
-    v = v;
-    var obj = v; // vue用に変更
-
-    obj.editingMilestonesText = v.summary.milestones.list.map(function (v) {
-      return v.dateText + " " + v.title;
-    }).join('\n');
-    v.isEditingMilestones = false;
-    return obj;
-  });
-
-  var callbackToReload = function callbackToReload(err) {
-    if (err) throw err;
-    app.reload();
-  };
-
-  var services = new Services(new TitleOnlyToMangedService_1.TitleOnlyToMangedService(taskSummaryRepository, taskTreeRepository), new UpdateNoteBodyService_1.UpdateNoteBodyService(taskNoteRepository), new CreateEmptyNoteService_1.CreateEmptyNoteService(taskNoteRepository, now));
-  var app = new Vue({
-    el: '#app',
-    data: {
-      message: 'Hello Vue!',
-      list: []
-      /*tasks*/
-      ,
-      rootBody: ''
-      /*taskTreeRepository.getTaskRootBody()*/
-      ,
-      filter: '',
-      owner: config.owner,
-      repo: config.repo,
-      issueUrlPrefix: "https://github.com/" + config.owner + "/" + config.repo + "/issues",
-      filterCheckbox: {
-        'title': {
-          label: '件名',
-          checked: true
-        },
-        'assgin': {
-          label: '担当',
-          checked: true
-        },
-        'body': {
-          label: '内容',
-          checked: true
-        },
-        'milestone': {
-          label: 'マイルストーン',
-          checked: true
-        },
-        'latestnote': {
-          label: '最新状況',
-          checked: true
-        }
-      }
-    },
-    computed: {
-      decoratedList: function decoratedList() {
-        var _this = this;
-
-        console.log('decoratedList');
-        var result = this.list;
-        var fitlerTargetMap = {
-          'title': function title(v) {
-            return v.title.indexOf(_this.filter) != -1;
-          },
-          'assgin': function assgin(v) {
-            return v.isManaged && v.summary.assign.indexOf(_this.filter) != -1;
-          },
-          'body': function body(v) {
-            return v.isManaged && v.summary.description.indexOf(_this.filter) != -1;
-          },
-          'milestone': function milestone(v) {
-            return v.isManaged && v.summary.milestones.contains(_this.filter);
-          },
-          'latestnote': function latestnote(v) {
-            return v.isManaged && v.latestNoteText.indexOf(_this.filter) != -1;
-          }
-        };
-        result = result.map(function (v) {
-          v.isHilight = false;
-          console.log(v.summary);
-
-          if (_this.filter.trim().length == 0) {
-            v.isHilight = false;
-          } else if (Object.keys(fitlerTargetMap).filter(function (key) {
-            return _this.filterCheckbox[key].checked;
-          }).some(function (key) {
-            return fitlerTargetMap[key](v);
-          })) {
-            v.isHilight = true;
-          }
-
-          v.isEditingMilestones = false;
-          return v;
-        });
-        return result;
-      }
-    },
-    methods: {
-      reload: function reload() {
-        this.list = taskListFactory.create().map(function (v) {
-          if (!v.isManaged) {
-            return v;
-          }
-
-          v = v;
-          var obj = v; // vue用に変更
-
-          var editingText = {
-            milestones: v.summary.milestones.list.map(function (v) {
-              return v.dateText + " " + v.title;
-            }).join('\n'),
-            isEditingMilestones: false,
-            assign: v.summary.assign,
-            isEditingAssign: false,
-            goal: v.summary.goal,
-            isEditingGoal: false,
-            completeDateText: v.summary.completeDate ? v.summary.completeDate.text : '',
-            isEditingCompleteDateText: false,
-            linksText: v.summary.links.text,
-            isEditingLinksText: false
-          };
-          obj.editingText = editingText;
-          return obj;
-        });
-        console.log(this.list);
-        this.rootBody = taskTreeRepository.getTaskRootBody();
-      },
-      onPressedRootBodyEdit: function onPressedRootBodyEdit() {
-        taskTreeRepository.updateTaskRootBody(this.rootBody, callbackToReload);
-      },
-      br: function br(text) {
-        return text.split('\n').join('<br>');
-      },
-      createTask: function createTask(titleOnlyTask) {
-        services.titleOnlyToMangedService.convert(titleOnlyTask, callbackToReload);
-      },
-      editNote: function editNote(note, selector) {
-        var body = document.querySelector(selector).value.trim();
-        services.updateNoteBodyService.update(note, body, callbackToReload);
-      },
-      createNote: function createNote(taskId) {
-        services.createEmptyNoteService.create(taskId, callbackToReload);
-      },
-      updateSummary: function updateSummary(obj) {
-        console.log(obj);
-        var editingText = obj.editingText;
-        var summary = taskSummaryRepository.getSummary(obj.taskId, now).updateMilestones(MilestoneFactory_1.MilestoneFactory.createMilestones(editingText.milestones, now)).updateAssign(editingText.assign).updateGoal(editingText.goal).updateCompleteDate(TaskSummary_1.DateInTask.create(editingText.completeDateText, now)).updateLinks(TaskSummary_1.Links.create(editingText.linksText));
-        taskSummaryRepository.update(summary, callbackToReload);
-      }
-    }
-  });
-  app.reload();
-}
-},{"./infra/github/IssueRepositoryImpl":"infra/github/IssueRepositoryImpl.ts","./infra/github/IssueRepositoryDummy":"infra/github/IssueRepositoryDummy.ts","./infra/github/CommentRepositoryImpl":"infra/github/CommentRepositoryImpl.ts","./infra/github/CommentRepositoryDummy":"infra/github/CommentRepositoryDummy.ts","./domain/TaskSummary":"domain/TaskSummary.ts","./infra/tasksummary/TaskSummaryImpl":"infra/tasksummary/TaskSummaryImpl.ts","./infra/tasknote/TaskNoteRepositoryImpl":"infra/tasknote/TaskNoteRepositoryImpl.ts","./domain/TaskTree":"domain/TaskTree.ts","./TaskListFactory":"TaskListFactory.ts","./service/TitleOnlyToMangedService":"service/TitleOnlyToMangedService.ts","./service/UpdateNoteBodyService":"service/UpdateNoteBodyService.ts","./service/CreateEmptyNoteService":"service/CreateEmptyNoteService.ts","./infra/tasksummary/MilestoneFactory":"infra/tasksummary/MilestoneFactory.ts"}],"../../../../../../usr/local/lib/node_modules/parcel/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./infra/github/IssueRepositoryImpl":"infra/github/IssueRepositoryImpl.ts","./infra/github/IssueRepositoryDummy":"infra/github/IssueRepositoryDummy.ts","./infra/github/CommentRepositoryImpl":"infra/github/CommentRepositoryImpl.ts","./infra/github/CommentRepositoryDummy":"infra/github/CommentRepositoryDummy.ts","./infra/tasksummary/TaskSummaryImpl":"infra/tasksummary/TaskSummaryImpl.ts","./infra/tasknote/TaskNoteRepositoryImpl":"infra/tasknote/TaskNoteRepositoryImpl.ts","./domain/TaskTree":"domain/TaskTree.ts","./View":"View.ts"}],"../../../../../../usr/local/lib/node_modules/parcel/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -1773,7 +1824,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57858" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61653" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

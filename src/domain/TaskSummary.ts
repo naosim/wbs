@@ -1,4 +1,5 @@
 import { TaskId } from "./TaskId";
+import { LinkFactory } from "../infra/text/markdown";
 
 export interface TaskSummaryIF {
   taskId: TaskId;
@@ -77,6 +78,11 @@ export class TaskSummary implements TaskSummaryIF {
     result.links = links;
     return result;
   }
+  updateDescription(description: string) {
+    var result = new TaskSummary(this);
+    result.description = description;
+    return result;
+  }
 }
 
 /*
@@ -133,16 +139,8 @@ export class DateInTask {
   isWithin(pastDate: Date): boolean {
     return this.date.getTime() <= pastDate.getTime();
   }
-  // TODO: ドメイン層にあるべきでない
-  static create(dateText: string, now: Date): DateInTask {
-    var parts = dateText.split('/').map(v => parseInt(v));
-    if(parts.length == 2) {// ex 6/23
-      parts = [(parts[0] <= 3 ? now.getFullYear() + 1: now.getFullYear()), ...parts]
-    }
-    var date = new Date(parts.join('/'));
-    return new DateInTask(dateText, date);
-  }
 }
+
 
 export class Link {
   constructor(
@@ -158,28 +156,14 @@ export class Link {
     }
 
     return `[${this.title}](${this.path})`
-  }
-  static create(v: string): Link {
-    if(v.indexOf('[') == -1) {
-      return new Link(v, v, false);
-    }
-    v = v.slice(v.indexOf('[') + 1);
-    var ary = v.split('](');
-    var title = ary[0];
-    var path = ary[1].slice(0, ary[1].length - 1);
-    return new Link(title, path, path.indexOf('http') == 0);
-  }
+  }  
 }
+
 
 export class Links {
   constructor(readonly list: Link[]) {}
   get text(): string {
     return this.list.map(v => `- ${v.text}`).join('\n')
-  }
-
-  static create(text: string) {
-    var list = text.split('\n').map(v => v.trim()).filter(v => v.length > 0).map(v => v.indexOf('- ') == 0 ? v.slice(2) : v).map(v => Link.create(v))
-    return new Links(list);
   }
 }
 

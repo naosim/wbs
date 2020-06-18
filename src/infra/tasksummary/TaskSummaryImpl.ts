@@ -1,18 +1,8 @@
-import { TaskSummaryIF, TaskSummary, DateInTask, Links, CreateTaskSummaryEvent, TaskSummaryRepository } from "../../domain/TaskSummary";
+import { TaskSummaryIF, TaskSummary, Links, CreateTaskSummaryEvent, TaskSummaryRepository } from "../../domain/TaskSummary";
 import { IssueRepository } from "../../domain/github/IssueRepository";
 import { TaskId } from "../../domain/TaskId";
-import { MilestoneFactory } from "./MilestoneFactory";
-export class DateInTaskFactory {
-  static create(dateText: string, now: Date): DateInTask {
-    var parts = dateText.split('/').map(v => parseInt(v));
-    if(parts.length == 2) {// ex 6/23
-      parts = [(parts[0] <= 3 ? now.getFullYear() + 1: now.getFullYear()), ...parts]
-    }
-    var date = new Date(parts.join('/'));
-    return new DateInTask(dateText, date);
-  }
-}
 
+import { DateInTaskFactory, LinksFactory, MilestoneFactory } from "../text/markdown";
 export class TaskSummaryRepositoryImpl implements TaskSummaryRepository {
   constructor(private issueRepository: IssueRepository) {
 }
@@ -47,7 +37,7 @@ export class TaskSummaryRepositoryImpl implements TaskSummaryRepository {
     //   var path = ary[1].slice(0, ary[1].length - 1);
     //   return {title: title, path: path, isHttp: path.indexOf('http') == 0};
     // })
-    obj.links = Links.create(obj['リンク'])
+    obj.links = LinksFactory.create(obj['リンク'])
     console.log(obj.links);
 
     obj.isDone = obj['完了'] && obj['完了'].trim().length > 0;
