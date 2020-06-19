@@ -599,6 +599,13 @@ function () {
     enumerable: false,
     configurable: true
   });
+  Object.defineProperty(Milestone.prototype, "isOverOrToday", {
+    get: function get() {
+      return this.isWithin(new Date(this.now.getTime() + 1 * 24 * 60 * 60 * 1000));
+    },
+    enumerable: false,
+    configurable: true
+  });
 
   Milestone.prototype.contains = function (text) {
     return this.title.indexOf(text) != -1 || this.dateInTask.text.indexOf(text) != -1;

@@ -118,6 +118,9 @@ export class Milestone {
   get isWithinOneWeek(): boolean {
     return this.isWithin(new Date(this.now.getTime() + 7 * 24 * 60 * 60 * 1000));
   }
+  get isOverOrToday(): boolean {
+    return this.isWithin(new Date(this.now.getTime() + 1 * 24 * 60 * 60 * 1000));
+  }
   contains(text: string): boolean {
     return this.title.indexOf(text) != -1 || this.dateInTask.text.indexOf(text) != -1;
   }

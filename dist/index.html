@@ -101,6 +101,10 @@ td:first-child {
 .caution {
   background: #ff8400;
 }
+.over {
+  background: #ff3322;
+  color: #fff;
+}
 .tasktree-edit {
   width: 300px;
   height: 300px;
@@ -194,7 +198,7 @@ td:first-child {
           <td v-if="!value.editingText.isEditingGoal" style="cursor: pointer" v-on:click="value.editingText.isEditingGoal=true"><span v-html="br(value.summary.goal)"></span></td>
           <td v-if="value.editingText.isEditingGoal"><textarea v-model="value.editingText.goal"></textarea><button v-on:click="updateSummary(value)">保存</button><button v-on:click="reload()">キャンセル</button></td>
 
-          <td v-if="!value.editingText.isEditingMilestones" style="cursor: pointer" v-on:click="value.editingText.isEditingMilestones=true"><p v-for="milestone in value.summary.milestones.list" v-bind:class="milestone.isWithinOneWeek ? 'caution' : ''">{{toMarkdown.forDateInTask(milestone.dateInTask)}} {{milestone.title}}</p></td>
+          <td v-if="!value.editingText.isEditingMilestones" style="cursor: pointer" v-on:click="value.editingText.isEditingMilestones=true"><p v-for="milestone in value.summary.milestones.list" v-bind:class="[milestone.isWithinOneWeek ? 'caution' : '', milestone.isOverOrToday ? 'over' : '']">{{toMarkdown.forDateInTask(milestone.dateInTask)}} {{milestone.title}}</p></td>
           <td v-if="value.editingText.isEditingMilestones"><textarea v-model="value.editingText.milestones"></textarea><button v-on:click="updateSummary(value)">保存</button><button v-on:click="reload()">キャンセル</button></td>
 
           <td v-bind:class="value.isManaged && value.isBeforeStartDate ? 'before-start-date' : ''"><span>{{ value.summary.startDate ? toMarkdown.forDateInTask(value.summary.startDate) : '' }}</span></td>
