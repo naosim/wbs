@@ -1692,6 +1692,8 @@ function () {
             checked: true
           }
         },
+        selectedFilter: 'フィルタなし',
+        selectedSecondFilter: 'フィルタなし',
         toMarkdown: new markdown_1.ToMarkdown()
       },
       computed: {
@@ -1719,7 +1721,6 @@ function () {
           };
           result = result.map(function (v) {
             v.isHilight = false;
-            console.log(v.summary);
 
             if (_this.filter.trim().length == 0) {
               v.isHilight = false;
@@ -1735,6 +1736,24 @@ function () {
             return v;
           });
           return result;
+        },
+        filteredList: function filteredList() {
+          var list = this.decoratedList;
+
+          if (this.selectedFilter == 'フィルタなし') {
+            return list;
+          }
+
+          return View.filter(list, 'nest0', this.selectedFilter);
+        },
+        filteredSecondList: function filteredSecondList() {
+          var list = this.filteredList;
+
+          if (this.selectedSecondFilter == 'フィルタなし') {
+            return list;
+          }
+
+          return View.filter(list, 'nest1', this.selectedSecondFilter);
         }
       },
       methods: {
@@ -1766,7 +1785,9 @@ function () {
             obj.editingText = editingText;
             return obj;
           });
-          console.log(this.list);
+          console.log(this.list.filter(function (v) {
+            return v.nest == 'nest0';
+          }));
           this.rootBody = taskTreeRepository.getTaskRootBody();
         },
         onPressedRootBodyEdit: function onPressedRootBodyEdit() {
@@ -1794,6 +1815,41 @@ function () {
       }
     });
     app.reload();
+  };
+
+  View.filter = function (list, nest, title) {
+    var convertToNestNum = function convertToNestNum(nest) {
+      return parseInt(nest.split('nest')[1]);
+    };
+
+    var targetNestNum = convertToNestNum(nest);
+    var isStart = false;
+    var isEnd = false;
+    return list.filter(function (task) {
+      var nestNum = convertToNestNum(task.nest);
+
+      if (!isStart) {
+        if (nestNum < targetNestNum) {
+          return true;
+        }
+
+        if (task.title == title) {
+          isStart = true;
+          return true;
+        }
+
+        return false;
+      } else if (isStart && !isEnd) {
+        if (task.nest != nest) {
+          return true;
+        }
+
+        isEnd = true;
+        return false;
+      } else if (isEnd) {
+        return false;
+      }
+    });
   };
 
   return View;

@@ -49,6 +49,8 @@ export class View {
           'milestone': { label: 'マイルストーン', checked: true },
           'latestnote': { label: '最新状況', checked: true }
         },
+        selectedFilter: 'フィルタなし',
+        selectedSecondFilter: 'フィルタなし',
         toMarkdown: new ToMarkdown(),
       },
       computed: {
@@ -64,7 +66,6 @@ export class View {
           };
           result = result.map(v => {
             v.isHilight = false;
-            console.log(v.summary);
             if (this.filter.trim().length == 0) {
               v.isHilight = false;
             }
@@ -75,6 +76,20 @@ export class View {
             return v;
           });
           return result;
+        },
+        filteredList: function() {
+          var list = this.decoratedList;
+          if(this.selectedFilter == 'フィルタなし') {
+            return list;
+          }
+          return View.filter(list, 'nest0', this.selectedFilter)
+        },
+        filteredSecondList: function() {
+          var list = this.filteredList;
+          if(this.selectedSecondFilter == 'フィルタなし') {
+            return list;
+          }
+          return View.filter(list, 'nest1', this.selectedSecondFilter)
         }
       },
       methods: {
@@ -102,7 +117,7 @@ export class View {
             obj.editingText = editingText;
             return obj;
           });
-          console.log(this.list);
+          console.log(this.list.filter(v => v.nest == 'nest0'));
           this.rootBody = taskTreeRepository.getTaskRootBody();
         },
         onPressedRootBodyEdit: function () {
@@ -137,5 +152,35 @@ export class View {
       }
     });
     app.reload();
+  }
+
+  static filter(list, nest, title) {
+    var convertToNestNum = (nest) => parseInt(nest.split('nest')[1]);
+    var targetNestNum = convertToNestNum(nest);
+    var isStart = false;
+    var isEnd = false;
+    return list.filter(task => {
+      var nestNum = convertToNestNum(task.nest);
+      if(!isStart) {
+        if(nestNum < targetNestNum) {
+          return true;
+        }
+        if(task.title == title) {
+          isStart = true;
+          return true;
+        }
+        return false;
+      } else if(isStart && !isEnd) {
+        if(task.nest != nest) {
+          return true;
+        }
+        isEnd = true;
+        return false;
+  
+      } else if(isEnd) {
+        return false;
+      }
+    })
+    
   }
 }

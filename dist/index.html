@@ -116,6 +116,16 @@ td:first-child {
 
   ハイライト: <input type="text" v-model="filter"></input>
   <label  v-for="key in Object.keys(filterCheckbox)" v-bind:for="'checkbox_' + key"><input type="checkbox" v-bind:id="'checkbox_' + key" v-bind:value="key" v-model="filterCheckbox[key].checked">{{filterCheckbox[key].label}}</input></label>
+  <br>
+  第１階層フィルタ: <select v-model="selectedFilter">
+    <option value="フィルタなし">フィルタなし</option>
+    <option v-for="task, index in decoratedList.filter(v => v.nest == 'nest0')" v-bind:value="task.title">{{task.title}}</option>
+  </select>
+
+  　第２階層フィルタ: <select v-model="selectedSecondFilter">
+    <option value="フィルタなし">フィルタなし</option>
+    <option v-for="task, index in filteredList.filter(v => v.nest == 'nest1')" v-bind:value="task.title">{{task.title}}</option>
+  </select>
 
   <table class="table">
     <thead>
@@ -142,7 +152,7 @@ td:first-child {
     </tr>
     </thead>
 
-    <tr v-for="value in decoratedList" v-bind:class="[value.isManaged && value.isDone ? 'done' : '', value.isHilight ? 'hilight' : '']">
+    <tr v-for="value in filteredSecondList" v-bind:class="[value.isManaged && value.isDone ? 'done' : '', value.isHilight ? 'hilight' : '']">
       <template v-if="value.isNode">
         <td class="notTask">
           <div v-bind:class="['whitespace', value.nest]"></div>
