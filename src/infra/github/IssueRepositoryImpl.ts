@@ -8,13 +8,14 @@ export class IssueRepositoryImpl implements IssueRepository {
   constructor(
     githubToken: string, 
     owner: string, 
-    repo: string
+    repo: string,
+    readonly isOnlyOpenIssue: boolean
   ) {
     this.gh = new GitHub({token: githubToken});
     this.issues = this.gh.getIssues(owner, repo)
   }
   refresh(cb: (err?, list?: Array<any>)=>void) {
-    this.issues.listIssues({state: 'all'}, (error, list) => {
+    this.issues.listIssues({state: this.isOnlyOpenIssue ? 'open' : 'all'}, (error, list) => {
       if(error) {
         cb(error, null);
         return;

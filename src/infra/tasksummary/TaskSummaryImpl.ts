@@ -73,14 +73,26 @@ export class TaskSummaryRepositoryImpl implements TaskSummaryRepository {
     return new TaskSummary(obj as TaskSummaryIF);
   }
 
-  getSummary(num: TaskId, now: Date): TaskSummary {
+  getSummary(num: TaskId, now: Date): TaskSummary | null {
     if(num <= 0) {
       throw '不正な番号'
     }
     // 担当,関係者,完了,DONEの定義,マイルストーン,開始日,終了日,内容,リンク
     var issue = this.issueRepository.getIssue(num);
+    if(!issue) {
+      throw `issue not found`;
+    }
     var s = TaskSummaryRepositoryImpl.convert(issue, num, now);
     return s;
+  }
+
+  hasSummary(num: TaskId): boolean {
+    if(num <= 0) {
+      throw '不正な番号'
+    }
+    // 担当,関係者,完了,DONEの定義,マイルストーン,開始日,終了日,内容,リンク
+    var issue = this.issueRepository.getIssue(num);
+    return issue ? true : false;
   }
 
   create(event: CreateTaskSummaryEvent, cb: (err?, issueNumber?: number)=>void) {

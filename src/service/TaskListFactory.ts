@@ -1,4 +1,4 @@
-import { NodeTask, TitleOnlyTask, ManagedTask } from '../domain/task';
+import { NodeTask, TitleOnlyTask, ManagedTask, ClosedManagedTask } from '../domain/task';
 import { TaskSummaryRepository } from '../domain/TaskSummary';
 import { TaskNoteRepository } from '../domain/TaskNote';
 import { TreeNode, TaskTitleAndId, TaskTreeRepository } from '../domain/TaskTree';
@@ -9,11 +9,14 @@ export class TaskListFactory {
     var tree = this.taskTreeRepository.getTaskTree();
     return this.flat(this.treeNodeToTask(tree, -1)).slice(1);
   }
-  private treeNodeToTask(node: TreeNode<TaskTitleAndId>, nestNum: number = 0): NodeTask | TitleOnlyTask | ManagedTask {
+  private treeNodeToTask(node: TreeNode<TaskTitleAndId>, nestNum: number = 0): NodeTask | TitleOnlyTask | ManagedTask | ClosedManagedTask {
     var title = node.value.title;
     var nest = `nest${nestNum}`;
     if (node.value.taskId) { // managed
-      return new ManagedTask(node.value.taskId, title, this.taskSummaryRepository.getSummary(node.value.taskId, this.now), this.taskNoteRepository.getNotes(node.value.taskId).latestNote, nest, node.package.map(v => v.title));
+      if(this.taskSummaryRepository.hasSummary(node.value.taskId)) {
+        return new ManagedTask(node.value.taskId, title, this.taskSummaryRepository.getSummary(node.value.taskId, this.now), this.taskNoteRepository.getNotes(node.value.taskId).latestNote, nest, node.package.map(v => v.title));
+      }
+      return new ClosedManagedTask(title, nest, node.package.map(v => v.title));
     }
     else if (node.hasChildren) {
       return new NodeTask(title, node.children.map(v => this.treeNodeToTask(v, nestNum + 1)), nest);
@@ -22,7 +25,10 @@ export class TaskListFactory {
       return new TitleOnlyTask(title, nest, node.package.map(v => v.title));
     }
   }
-  private flat(task: NodeTask | TitleOnlyTask | ManagedTask, list: (NodeTask | TitleOnlyTask | ManagedTask)[] = []): Array<NodeTask | TitleOnlyTask | ManagedTask> {
+  private flat(task: NodeTask | TitleOnlyTask | ManagedTask, list: (NodeTask | TitleOnlyTask | ManagedTask | ClosedManagedTask)[] = []): Array<NodeTask | TitleOnlyTask | ManagedTask | null> {
+    if(task.isClosed) {
+      return;
+    }
     list.push(task);
     if (task.isNode) {
       (task as NodeTask).children.forEach(v => this.flat(v, list));

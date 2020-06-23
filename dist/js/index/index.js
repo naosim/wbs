@@ -128,7 +128,8 @@ exports.IssueRepositoryImpl = void 0;
 var IssueRepositoryImpl =
 /** @class */
 function () {
-  function IssueRepositoryImpl(githubToken, owner, repo) {
+  function IssueRepositoryImpl(githubToken, owner, repo, isOnlyOpenIssue) {
+    this.isOnlyOpenIssue = isOnlyOpenIssue;
     this.gh = new GitHub({
       token: githubToken
     });
@@ -139,7 +140,7 @@ function () {
     var _this = this;
 
     this.issues.listIssues({
-      state: 'all'
+      state: this.isOnlyOpenIssue ? 'open' : 'all'
     }, function (error, list) {
       if (error) {
         cb(error, null);
@@ -965,8 +966,23 @@ function () {
 
 
     var issue = this.issueRepository.getIssue(num);
+
+    if (!issue) {
+      throw "issue not found";
+    }
+
     var s = TaskSummaryRepositoryImpl.convert(issue, num, now);
     return s;
+  };
+
+  TaskSummaryRepositoryImpl.prototype.hasSummary = function (num) {
+    if (num <= 0) {
+      throw '不正な番号';
+    } // 担当,関係者,完了,DONEの定義,マイルストーン,開始日,終了日,内容,リンク
+
+
+    var issue = this.issueRepository.getIssue(num);
+    return issue ? true : false;
   };
 
   TaskSummaryRepositoryImpl.prototype.create = function (event, cb) {
@@ -1317,7 +1333,7 @@ exports.TaskTreeRepository = TaskTreeRepository;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.ManagedTask = exports.TitleOnlyTask = exports.NodeTask = void 0;
+exports.ClosedManagedTask = exports.ManagedTask = exports.TitleOnlyTask = exports.NodeTask = void 0;
 
 var TaskSummary_1 = require("./TaskSummary");
 
@@ -1331,6 +1347,7 @@ function () {
     this.isNode = true;
     this.isTitleOnly = false;
     this.isManaged = false;
+    this.isClosed = false;
     this.status = 'opened';
   }
 
@@ -1349,6 +1366,7 @@ function () {
     this.isNode = false;
     this.isTitleOnly = true;
     this.isManaged = false;
+    this.isClosed = false;
   }
 
   TitleOnlyTask.prototype.toMangedTask = function () {
@@ -1373,6 +1391,7 @@ function () {
     this.isNode = false;
     this.isTitleOnly = false;
     this.isManaged = true;
+    this.isClosed = false;
     this.isDone = summary.isDone;
     this.isBeforeStartDate = summary.isBeforeStartDate;
     this.isAfterEndDate = summary.isAfterEndDate;
@@ -1383,6 +1402,28 @@ function () {
 }();
 
 exports.ManagedTask = ManagedTask;
+
+var ClosedManagedTask =
+/** @class */
+function () {
+  function ClosedManagedTask(title, nest, packages) {
+    this.title = title;
+    this.nest = nest;
+    this.packages = packages;
+    this.isNode = false;
+    this.isTitleOnly = true;
+    this.isManaged = false;
+    this.isClosed = true;
+  }
+
+  ClosedManagedTask.prototype.toMangedTask = function () {
+    return new TaskSummary_1.CreateTaskSummaryEvent(this.title);
+  };
+
+  return ClosedManagedTask;
+}();
+
+exports.ClosedManagedTask = ClosedManagedTask;
 },{"./TaskSummary":"domain/TaskSummary.ts"}],"service/TaskListFactory.ts":[function(require,module,exports) {
 "use strict";
 
@@ -1420,7 +1461,13 @@ function () {
 
     if (node.value.taskId) {
       // managed
-      return new task_1.ManagedTask(node.value.taskId, title, this.taskSummaryRepository.getSummary(node.value.taskId, this.now), this.taskNoteRepository.getNotes(node.value.taskId).latestNote, nest, node.package.map(function (v) {
+      if (this.taskSummaryRepository.hasSummary(node.value.taskId)) {
+        return new task_1.ManagedTask(node.value.taskId, title, this.taskSummaryRepository.getSummary(node.value.taskId, this.now), this.taskNoteRepository.getNotes(node.value.taskId).latestNote, nest, node.package.map(function (v) {
+          return v.title;
+        }));
+      }
+
+      return new task_1.ClosedManagedTask(title, nest, node.package.map(function (v) {
         return v.title;
       }));
     } else if (node.hasChildren) {
@@ -1439,6 +1486,10 @@ function () {
 
     if (list === void 0) {
       list = [];
+    }
+
+    if (task.isClosed) {
+      return;
     }
 
     list.push(task);
@@ -1776,7 +1827,7 @@ var View_1 = require("./View");
   var issueRepository;
   var commentRepository;
   var config = window.config;
-  issueRepository = new IssueRepositoryImpl_1.IssueRepositoryImpl(config.githubToken, config.owner, config.repo);
+  issueRepository = new IssueRepositoryImpl_1.IssueRepositoryImpl(config.githubToken, config.owner, config.repo, config.isOnlyOpenIssue);
   commentRepository = new CommentRepositoryImpl_1.CommentRepositoryImpl(config.githubToken, config.owner, config.repo);
 
   if (config.isDevelop) {

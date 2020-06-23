@@ -4,4 +4,5 @@ export type Config = {
   repo: string;
   taskRootIssueNumber: number;
   isDevelop: boolean;
+  isOnlyOpenIssue: boolean;
 };

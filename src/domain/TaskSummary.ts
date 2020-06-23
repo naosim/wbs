@@ -172,6 +172,7 @@ export class Links {
 
 export interface TaskSummaryRepository {
   getSummary(num: TaskId, now: Date): TaskSummary;
+  hasSummary(num: TaskId): boolean;
   create(event: CreateTaskSummaryEvent, cb: (err?, issueNumber?: number)=>void)
   update(summary: TaskSummary, cb: (err?)=>void)
 }

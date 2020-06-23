@@ -8,12 +8,14 @@ export interface TaskIf {
   isTitleOnly: boolean;
   isManaged: boolean;
   nest: string;
+  isClosed;
 }
 
 export class NodeTask implements TaskIf {
   isNode: boolean = true;
   isTitleOnly: boolean = false;
   isManaged: boolean = false;
+  isClosed = false;
   status = 'opened';
 
   constructor(
@@ -27,6 +29,7 @@ export class TitleOnlyTask implements TaskIf {
   isNode: boolean = false;
   isTitleOnly: boolean = true;
   isManaged: boolean = false;
+  isClosed = false;
 
   constructor(
     public title: string,
@@ -42,6 +45,7 @@ export class ManagedTask implements TaskIf {
   readonly isNode: boolean = false;
   readonly isTitleOnly: boolean = false;
   readonly isManaged: boolean = true;
+  isClosed = false;
 
   readonly isDone: boolean;
   readonly isBeforeStartDate: boolean;
@@ -60,5 +64,21 @@ export class ManagedTask implements TaskIf {
     this.isBeforeStartDate = summary.isBeforeStartDate;
     this.isAfterEndDate = summary.isAfterEndDate;
     this.latestNoteText = latestNote ? `${latestNote.date}\n${latestNote.body}` : ''
+  }
+}
+
+export class ClosedManagedTask implements TaskIf {
+  isNode: boolean = false;
+  isTitleOnly: boolean = true;
+  isManaged: boolean = false;
+  isClosed = true;
+
+  constructor(
+    public title: string,
+    public nest: string,
+    readonly packages: string[]
+  ) {}
+  toMangedTask(): CreateTaskSummaryEvent {
+    return new CreateTaskSummaryEvent(this.title);
   }
 }

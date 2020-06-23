@@ -23,7 +23,8 @@ declare var window;
   issueRepository = new IssueRepositoryImpl(
     config.githubToken,
     config.owner,
-    config.repo
+    config.repo,
+    config.isOnlyOpenIssue
   );
   commentRepository = new CommentRepositoryImpl(
     config.githubToken,
