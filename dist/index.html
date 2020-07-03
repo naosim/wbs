@@ -8,13 +8,15 @@ p {
   margin: 2px;
   line-height: 1.4em;
 }
+table {
+  border-collapse: collapse;
+  border: 1px solid #aaa;
+}
 th, td {
   font-size: 12px;
 }
-.table {
+.table.main {
   width: 2600px;
-  border-collapse: collapse;
-  border: 1px solid #aaa;
 }
 th {
   background: #eef;
@@ -34,7 +36,7 @@ thead th {
   z-index: 1;
 }
 
-th:first-child, td:first-child {
+.main th:first-child, .main td:first-child {
   /* 横スクロール時に固定する */
   position: -webkit-sticky;
   position: sticky;
@@ -115,7 +117,7 @@ td:first-child {
   <h1>WBS</h1>
 
   ハイライト: <input type="text" v-model="filter"></input>
-  <label  v-for="key in Object.keys(filterCheckbox)" v-bind:for="'checkbox_' + key"><input type="checkbox" v-bind:id="'checkbox_' + key" v-bind:value="key" v-model="filterCheckbox[key].checked">{{filterCheckbox[key].label}}</input></label>
+  <label v-for="key in Object.keys(filterCheckbox)" v-bind:for="'checkbox_' + key"><input type="checkbox" v-bind:id="'checkbox_' + key" v-bind:value="key" v-model="filterCheckbox[key].checked">{{filterCheckbox[key].label}}</input></label>
   <br>
   第１階層フィルタ: <select v-model="selectedFilter">
     <option value="フィルタなし">フィルタなし</option>
@@ -127,7 +129,7 @@ td:first-child {
     <option v-for="task, index in filteredList.filter(v => v.nest == 'nest1')" v-bind:value="task.title">{{task.title}}</option>
   </select>
 
-  <table class="table">
+  <table class="table main">
     <thead>
       <tr>
       <th>件名</th>
@@ -271,6 +273,16 @@ td:first-child {
       
     </tr>
   </table>
+
+  <h2>マイルストーン</h2>
+  <table class="table milestone">
+    <thead><tr><th>期限</th><th>担当</th><th>タイトル</th></tr></thead>
+    <tbody>
+      <tr v-for="milestone in milestones" v-bind:class="[milestone.milestone.isWithinOneWeek ? 'caution' : '', milestone.milestone.isOverOrToday ? 'over' : '']"><td>{{milestone.milestone.dateInTask.date.toLocaleDateString()}}({{day(milestone.milestone.dateInTask.date)}})</td><td>{{milestone.assign}}</td><td>{{milestone.title}} {{milestone.milestone.title}}</td></tr>
+    </tbody>
+  </table>
+  
+  <h2>階層</h2>
   <textarea class="tasktree-edit" v-model="rootBody"></textarea><br>
   <button v-on:click="onPressedRootBodyEdit()">ok</button><br>
 </div>

@@ -1656,46 +1656,47 @@ function () {
     };
 
     var services = new Services_1.Services(new TitleOnlyToMangedService_1.TitleOnlyToMangedService(taskSummaryRepository, taskTreeRepository), new UpdateNoteBodyService_1.UpdateNoteBodyService(taskNoteRepository), new CreateEmptyNoteService_1.CreateEmptyNoteService(taskNoteRepository, now));
+    var vueData = {
+      message: 'Hello Vue!',
+      list: []
+      /* Array<NodeTask | TitleOnlyTask | ManagedTask> */
+      ,
+      rootBody: ''
+      /*taskTreeRepository.getTaskRootBody()*/
+      ,
+      filter: '',
+      owner: config.owner,
+      repo: config.repo,
+      issueUrlPrefix: "https://github.com/" + config.owner + "/" + config.repo + "/issues",
+      filterCheckbox: {
+        'title': {
+          label: '件名',
+          checked: true
+        },
+        'assgin': {
+          label: '担当',
+          checked: true
+        },
+        'body': {
+          label: '内容',
+          checked: true
+        },
+        'milestone': {
+          label: 'マイルストーン',
+          checked: true
+        },
+        'latestnote': {
+          label: '最新状況',
+          checked: true
+        }
+      },
+      selectedFilter: 'フィルタなし',
+      selectedSecondFilter: 'フィルタなし',
+      toMarkdown: new markdown_1.ToMarkdown()
+    };
     var app = new window.Vue({
       el: '#app',
-      data: {
-        message: 'Hello Vue!',
-        list: []
-        /*tasks*/
-        ,
-        rootBody: ''
-        /*taskTreeRepository.getTaskRootBody()*/
-        ,
-        filter: '',
-        owner: config.owner,
-        repo: config.repo,
-        issueUrlPrefix: "https://github.com/" + config.owner + "/" + config.repo + "/issues",
-        filterCheckbox: {
-          'title': {
-            label: '件名',
-            checked: true
-          },
-          'assgin': {
-            label: '担当',
-            checked: true
-          },
-          'body': {
-            label: '内容',
-            checked: true
-          },
-          'milestone': {
-            label: 'マイルストーン',
-            checked: true
-          },
-          'latestnote': {
-            label: '最新状況',
-            checked: true
-          }
-        },
-        selectedFilter: 'フィルタなし',
-        selectedSecondFilter: 'フィルタなし',
-        toMarkdown: new markdown_1.ToMarkdown()
-      },
+      data: vueData,
       computed: {
         decoratedList: function decoratedList() {
           var _this = this;
@@ -1754,6 +1755,36 @@ function () {
           }
 
           return View.filter(list, 'nest1', this.selectedSecondFilter);
+        },
+        milestones: function milestones() {
+          var milestones = vueData.list.filter(function (v) {
+            return v.isManaged;
+          }).map(function (v) {
+            return v;
+          }).filter(function (v) {
+            return !v.isDone;
+          }).map(function (v) {
+            return {
+              taskId: v.taskId,
+              assign: v.summary.assign,
+              title: v.title,
+              milestones: v.summary.milestones.list
+            };
+          }).reduce(function (memo, v) {
+            return memo.concat(v.milestones.filter(function (m) {
+              return !m.isDone;
+            }).map(function (m) {
+              return {
+                taskId: v.taskId,
+                assign: v.assign,
+                title: v.title,
+                milestone: m
+              };
+            }));
+          }, []).sort(function (a, b) {
+            return a.milestone.dateInTask.date.getTime() - b.milestone.dateInTask.date.getTime();
+          });
+          return milestones;
         }
       },
       methods: {
@@ -1795,6 +1826,9 @@ function () {
         },
         br: function br(text) {
           return text.split('\n').join('<br>');
+        },
+        day: function day(date) {
+          return '日月火水木金土'[date.getDay()];
         },
         createTask: function createTask(titleOnlyTask) {
           services.titleOnlyToMangedService.convert(titleOnlyTask, callbackToReload);
@@ -1938,7 +1972,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61653" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59985" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

@@ -1,5 +1,5 @@
-import { TitleOnlyTask, ManagedTask } from './domain/task';
-import { TaskSummaryRepository, Links, DateInTask } from './domain/TaskSummary';
+import { TitleOnlyTask, ManagedTask, NodeTask } from './domain/task';
+import { TaskSummaryRepository, Links, DateInTask, Milestone } from './domain/TaskSummary';
 import { TaskId } from './domain/TaskId';
 import { Note, TaskNoteRepository } from './domain/TaskNote';
 import { TaskTreeRepository } from './domain/TaskTree';
@@ -13,6 +13,30 @@ import { Services } from "./Services";
 import { DateInTaskFactory, LinksFactory, ToMarkdown, MilestoneFactory } from './infra/text/markdown';
 import { Config } from './Config';
 declare var window;
+
+type CheckBoxModel = { label: string, checked: boolean }
+type VueData = {
+  message: string,
+  list: Array<NodeTask | TitleOnlyTask | ManagedTask>,
+  rootBody: string,
+  filter: string,
+  owner: string,
+  repo: string,
+  issueUrlPrefix: string,
+  filterCheckbox: {
+    title: CheckBoxModel,
+    assgin: CheckBoxModel,
+    body: CheckBoxModel,
+    milestone: CheckBoxModel,
+    latestnote: CheckBoxModel
+  },
+  selectedFilter: string,
+  selectedSecondFilter: string,
+  toMarkdown: ToMarkdown,
+}
+
+type MilestoneModel = {taskId: TaskId, assign: string, title: string, milestone: Milestone};
+
 export class View {
   static setup(taskSummaryRepository: TaskSummaryRepository, taskNoteRepository: TaskNoteRepository, taskTreeRepository: TaskTreeRepository, now: Date, config: Config) {
     var taskListFactory = new TaskListFactory(taskSummaryRepository, taskNoteRepository, taskTreeRepository, now);
@@ -32,27 +56,30 @@ export class View {
       app.reload();
     };
     var services = new Services(new TitleOnlyToMangedService(taskSummaryRepository, taskTreeRepository), new UpdateNoteBodyService(taskNoteRepository), new CreateEmptyNoteService(taskNoteRepository, now));
+
+    const vueData: VueData = {
+      message: 'Hello Vue!',
+      list: [] /* Array<NodeTask | TitleOnlyTask | ManagedTask> */,
+      rootBody: '' /*taskTreeRepository.getTaskRootBody()*/,
+      filter: '',
+      owner: config.owner,
+      repo: config.repo,
+      issueUrlPrefix: `https://github.com/${config.owner}/${config.repo}/issues`,
+      filterCheckbox: {
+        'title': { label: '件名', checked: true },
+        'assgin': { label: '担当', checked: true },
+        'body': { label: '内容', checked: true },
+        'milestone': { label: 'マイルストーン', checked: true },
+        'latestnote': { label: '最新状況', checked: true }
+      },
+      selectedFilter: 'フィルタなし',
+      selectedSecondFilter: 'フィルタなし',
+      toMarkdown: new ToMarkdown(),
+    }
+
     var app = new window.Vue({
       el: '#app',
-      data: {
-        message: 'Hello Vue!',
-        list: [] /*tasks*/,
-        rootBody: '' /*taskTreeRepository.getTaskRootBody()*/,
-        filter: '',
-        owner: config.owner,
-        repo: config.repo,
-        issueUrlPrefix: `https://github.com/${config.owner}/${config.repo}/issues`,
-        filterCheckbox: {
-          'title': { label: '件名', checked: true },
-          'assgin': { label: '担当', checked: true },
-          'body': { label: '内容', checked: true },
-          'milestone': { label: 'マイルストーン', checked: true },
-          'latestnote': { label: '最新状況', checked: true }
-        },
-        selectedFilter: 'フィルタなし',
-        selectedSecondFilter: 'フィルタなし',
-        toMarkdown: new ToMarkdown(),
-      },
+      data: vueData,
       computed: {
         decoratedList: function () {
           console.log('decoratedList');
@@ -90,6 +117,16 @@ export class View {
             return list;
           }
           return View.filter(list, 'nest1', this.selectedSecondFilter)
+        },
+        milestones: function() {
+          var milestones: MilestoneModel[] = vueData.list
+            .filter(v => v.isManaged)
+            .map(v => v as ManagedTask)
+            .filter(v => !v.isDone)
+            .map(v => ({taskId: v.taskId, assign: v.summary.assign, title: v.title, milestones: v.summary.milestones.list}))
+            .reduce((memo, v) => memo.concat(v.milestones.filter(m => !m.isDone).map(m =>({taskId: v.taskId, assign: v.assign, title: v.title, milestone: m}))), [])
+            .sort((a: MilestoneModel, b: MilestoneModel) => a.milestone.dateInTask.date.getTime() - b.milestone.dateInTask.date.getTime())
+          return milestones;
         }
       },
       methods: {
@@ -126,6 +163,9 @@ export class View {
         br(text) {
           return text.split('\n').join('<br>');
         },
+        day(date) {
+          return '日月火水木金土'[date.getDay()]
+        }
         createTask(titleOnlyTask: TitleOnlyTask) {
           services.titleOnlyToMangedService.convert(titleOnlyTask, callbackToReload);
         },

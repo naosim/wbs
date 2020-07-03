@@ -17,7 +17,8 @@ window.config = {
   owner: 'githubリポジトリのオーナー',
   repo: 'githubのリポジトリ名',
   taskRootIssueNumber: 1,
-  isDevelop: true
+  isDevelop: true,
+  isOnlyOpenIssue: true
 };
 ```
 
