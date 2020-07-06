@@ -121,6 +121,13 @@ export class Milestone {
   get isOverOrToday(): boolean {
     return this.isWithin(new Date(this.now.getTime() + 1 * 24 * 60 * 60 * 1000));
   }
+  /**
+   * 2週間前よりも後 (完了してるかどうかは関係なし)
+   */
+  get isAfter2WeeksAgo(): boolean {
+    var twoWeeksAgo = this.now.getTime() - 14 * 24 * 60 * 60 * 1000;
+    return this.dateInTask.date.getTime() > twoWeeksAgo;
+  }
   contains(text: string): boolean {
     return this.title.indexOf(text) != -1 || this.dateInTask.text.indexOf(text) != -1;
   }

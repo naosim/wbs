@@ -35,7 +35,13 @@ type VueData = {
   toMarkdown: ToMarkdown,
 }
 
-type MilestoneModel = {taskId: TaskId, assign: string, title: string, milestone: Milestone};
+type MilestoneModel = {
+  taskId: TaskId, 
+  isTaskDone: boolean,
+  assign: string, 
+  title: string, 
+  milestone: Milestone
+};
 
 export class View {
   static setup(taskSummaryRepository: TaskSummaryRepository, taskNoteRepository: TaskNoteRepository, taskTreeRepository: TaskTreeRepository, now: Date, config: Config) {
@@ -118,16 +124,23 @@ export class View {
           }
           return View.filter(list, 'nest1', this.selectedSecondFilter)
         },
-        milestones: function() {
+        milestones: function(): MilestoneModel[] {
           var milestones: MilestoneModel[] = vueData.list
             .filter(v => v.isManaged)
             .map(v => v as ManagedTask)
-            .filter(v => !v.isDone)
-            .map(v => ({taskId: v.taskId, assign: v.summary.assign, title: v.title, milestones: v.summary.milestones.list}))
-            .reduce((memo, v) => memo.concat(v.milestones.filter(m => !m.isDone).map(m =>({taskId: v.taskId, assign: v.assign, title: v.title, milestone: m}))), [])
+            .map(v => ({taskId: v.taskId, isTaskDone: v.isDone, assign: v.summary.assign, title: v.title, milestones: v.summary.milestones.list}))
+            .reduce((memo, v) => memo.concat(v.milestones.map(m =>({taskId: v.taskId, isTaskDone: v.isTaskDone, assign: v.assign, title: v.title, milestone: m}))), [])
             .sort((a: MilestoneModel, b: MilestoneModel) => a.milestone.dateInTask.date.getTime() - b.milestone.dateInTask.date.getTime())
           return milestones;
-        }
+        },
+        notDoneMilestones: function(): MilestoneModel[] {
+          return this.milestones.filter(v => !v.isTaskDone && !v.milestone.isDone)
+        },
+        doneMilestonesIn2Weeks: function(): MilestoneModel[] {
+          return this.milestones
+            .filter(v => v.isTaskDone || v.milestone.isDone)
+            .filter(v => v.milestone.isAfter2WeeksAgo)
+        },
       },
       methods: {
         reload: function () {
@@ -165,7 +178,7 @@ export class View {
         },
         day(date) {
           return '日月火水木金土'[date.getDay()]
-        }
+        },
         createTask(titleOnlyTask: TitleOnlyTask) {
           services.titleOnlyToMangedService.convert(titleOnlyTask, callbackToReload);
         },

@@ -278,7 +278,15 @@ td:first-child {
   <table class="table milestone">
     <thead><tr><th>期限</th><th>担当</th><th>タイトル</th></tr></thead>
     <tbody>
-      <tr v-for="milestone in milestones" v-bind:class="[milestone.milestone.isWithinOneWeek ? 'caution' : '', milestone.milestone.isOverOrToday ? 'over' : '']"><td>{{milestone.milestone.dateInTask.date.toLocaleDateString()}}({{day(milestone.milestone.dateInTask.date)}})</td><td>{{milestone.assign}}</td><td>{{milestone.title}} {{milestone.milestone.title}}</td></tr>
+      <tr v-for="milestone in notDoneMilestones" v-bind:class="[milestone.milestone.isWithinOneWeek ? 'caution' : '', milestone.milestone.isOverOrToday ? 'over' : '']"><td>{{milestone.milestone.dateInTask.date.toLocaleDateString()}}({{day(milestone.milestone.dateInTask.date)}})</td><td>{{milestone.assign}}</td><td>{{milestone.title}} {{milestone.milestone.title}}</td></tr>
+    </tbody>
+  </table>
+
+  <h2>完了済みマイルストーン (2週間以内に完了)</h2>
+  <table class="table milestone">
+    <thead><tr><th>期限</th><th>担当</th><th>タイトル</th></tr></thead>
+    <tbody>
+      <tr v-for="milestone in doneMilestonesIn2Weeks"><td>{{milestone.milestone.dateInTask.date.toLocaleDateString()}}({{day(milestone.milestone.dateInTask.date)}})</td><td>{{milestone.assign}}</td><td>{{milestone.title}} {{milestone.milestone.title}}</td></tr>
     </tbody>
   </table>
   

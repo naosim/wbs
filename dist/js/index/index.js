@@ -607,6 +607,17 @@ function () {
     enumerable: false,
     configurable: true
   });
+  Object.defineProperty(Milestone.prototype, "isAfter2WeeksAgo", {
+    /**
+     * 2週間前よりも後 (完了してるかどうかは関係なし)
+     */
+    get: function get() {
+      var twoWeeksAgo = this.now.getTime() - 14 * 24 * 60 * 60 * 1000;
+      return this.dateInTask.date.getTime() > twoWeeksAgo;
+    },
+    enumerable: false,
+    configurable: true
+  });
 
   Milestone.prototype.contains = function (text) {
     return this.title.indexOf(text) != -1 || this.dateInTask.text.indexOf(text) != -1;
@@ -1761,21 +1772,19 @@ function () {
             return v.isManaged;
           }).map(function (v) {
             return v;
-          }).filter(function (v) {
-            return !v.isDone;
           }).map(function (v) {
             return {
               taskId: v.taskId,
+              isTaskDone: v.isDone,
               assign: v.summary.assign,
               title: v.title,
               milestones: v.summary.milestones.list
             };
           }).reduce(function (memo, v) {
-            return memo.concat(v.milestones.filter(function (m) {
-              return !m.isDone;
-            }).map(function (m) {
+            return memo.concat(v.milestones.map(function (m) {
               return {
                 taskId: v.taskId,
+                isTaskDone: v.isTaskDone,
                 assign: v.assign,
                 title: v.title,
                 milestone: m
@@ -1785,6 +1794,18 @@ function () {
             return a.milestone.dateInTask.date.getTime() - b.milestone.dateInTask.date.getTime();
           });
           return milestones;
+        },
+        notDoneMilestones: function notDoneMilestones() {
+          return this.milestones.filter(function (v) {
+            return !v.isTaskDone && !v.milestone.isDone;
+          });
+        },
+        doneMilestonesIn2Weeks: function doneMilestonesIn2Weeks() {
+          return this.milestones.filter(function (v) {
+            return v.isTaskDone || v.milestone.isDone;
+          }).filter(function (v) {
+            return v.milestone.isAfter2WeeksAgo;
+          });
         }
       },
       methods: {
